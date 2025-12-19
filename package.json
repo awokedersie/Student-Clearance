@@ -1,0 +1,26 @@
+{
+  "name": "dbu-clearance-system",
+  "version": "1.0.0",
+  "description": "DBU Clearance Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build:client": "cd client && npm run build",
+    "build-client": "cd client && npm run build"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "body-parser": "^2.2.0",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "express-session": "^1.18.2",
+    "image-size": "^2.0.2",
+    "multer": "^2.0.2",
+    "mysql2": "^3.15.3",
+    "nodemailer": "^7.0.10"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
