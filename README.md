@@ -85,7 +85,7 @@ graph TD
      ```env
      DB_HOST=localhost
      DB_USER=root
-     DB_PASSWORD=your_password
+     DB_PASSWORD=""
      DB_NAME=clearance
      EMAIL_USER=your-email@gmail.com
      EMAIL_PASS=your-app-password
