@@ -7,6 +7,7 @@ const dbConfig = {
     password: process.env.DB_PASSWORD || '9700',
     database: process.env.DB_NAME || 'clearance',
     port: process.env.DB_PORT || 5434,
+    ssl: process.env.DB_HOST !== 'localhost' ? { rejectUnauthorized: false } : false
 };
 
 const pool = new Pool(dbConfig);
