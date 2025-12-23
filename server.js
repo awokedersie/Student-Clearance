@@ -16,6 +16,7 @@ const path = require('path');
 const app = express();
 
 // ==================== MIDDLEWARE SETUP ====================
+app.set('trust proxy', 1); // Trust first proxy (Render)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
