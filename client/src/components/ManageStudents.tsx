@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 
 interface Student {
@@ -65,9 +65,17 @@ const ManageStudents: React.FC = () => {
         }
     };
 
+    const location = useLocation();
+
     useEffect(() => {
         fetchData();
-    }, []);
+
+        // Auto-open form if quick-action is triggered from dashboard
+        const params = new URLSearchParams(location.search);
+        if (params.get('action') === 'add') {
+            setShowForm(true);
+        }
+    }, [location.search]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();

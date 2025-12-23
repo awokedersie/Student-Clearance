@@ -111,7 +111,7 @@ const Notifications: React.FC = () => {
 
                                         <div className="flex items-center gap-2 pt-2">
                                             <div className="w-2 h-2 rounded-full bg-indigo-500 group-hover:scale-150 transition-transform"></div>
-                                            <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest opacity-60">System Log: ID-{i + 1000}</span>
+                                            <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest opacity-60">System Log: ID-{n.id || (1000 + i)}</span>
                                         </div>
                                     </div>
                                 </div>

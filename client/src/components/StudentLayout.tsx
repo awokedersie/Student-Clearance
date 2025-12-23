@@ -55,8 +55,24 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
             )
         },
         { name: 'Profile', path: '/student/profile', icon: '👤' },
-        { name: 'Request Clearance', path: '/student/clearance-request', icon: '📄' },
-        { name: 'View Status', path: '/student/clearance-status', icon: '📜' },
+        {
+            name: 'Request Clearance',
+            path: '/student/clearance-request',
+            icon: (
+                <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            )
+        },
+        {
+            name: 'View Status',
+            path: '/student/clearance-status',
+            icon: (
+                <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+            )
+        },
         { name: 'Notifications', path: '/student/notifications', icon: '🔔' },
         { name: 'Change password', path: '/student/change-password', icon: '🔑' },
         { name: 'About Us', path: '/about', icon: 'ℹ️' },
@@ -74,34 +90,36 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
             )}
 
             {/* Sidebar */}
-            <aside className={`fixed lg:static inset-y-0 left-0 w-64 bg-[#1a237e] text-white flex-shrink-0 flex flex-col shadow-xl z-50 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} transition-transform duration-300 ease-in-out`}>
-                <div className="p-6 text-2xl font-black border-b border-white/10 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <span className="text-3xl">🎓</span>
-                        <span>DBU <span className="font-light">Portal</span></span>
-                    </div>
-                    <button className="lg:hidden text-white/50 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
+            <aside className={`fixed lg:static inset-y-0 left-0 w-64 bg-indigo-900 text-white flex-shrink-0 flex flex-col shadow-2xl z-50 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} transition-transform duration-300 ease-in-out`}>
+                <div className="p-6 text-2xl font-black tracking-tighter border-b border-indigo-800 flex items-center justify-between">
+                    <span>
+                        DBU <span className="text-indigo-400 font-light italic">Clearance</span>
+                    </span>
+                    <button
+                        className="lg:hidden text-indigo-300 hover:text-white"
+                        onClick={() => setIsSidebarOpen(false)}
+                    >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-1 overflow-y-auto mt-4">
+                <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                     {menuItems.map(item => (
                         <Link
                             key={item.path}
                             to={item.path}
                             onClick={() => setIsSidebarOpen(false)}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${location.pathname === item.path
-                                ? 'bg-[#3949ab] text-white shadow-md font-bold'
-                                : 'text-indigo-100/70 hover:bg-[#283593] hover:text-white'
+                            className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group ${location.pathname === item.path
+                                ? 'bg-indigo-700 text-white shadow-lg'
+                                : 'text-indigo-200 hover:bg-indigo-800 hover:text-white'
                                 }`}
                         >
-                            <span className={typeof item.icon === 'string' ? 'text-xl' : ''}>
+                            <span className={`text-xl group-hover:scale-110 transition-transform ${typeof item.icon !== 'string' ? '' : ''}`}>
                                 {item.icon}
                             </span>
-                            <span>{item.name}</span>
+                            <span className="font-medium">{item.name}</span>
                             {item.name === 'Notifications' && unreadNotifications > 0 && (
                                 <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">
                                     {unreadNotifications}
@@ -111,15 +129,12 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
                     ))}
                 </nav>
 
-                <div className="p-4 border-t border-white/10">
+                <div className="p-4 border-t border-indigo-800">
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-4 px-4 py-4 text-red-300 hover:bg-red-500 hover:text-white rounded-2xl transition-all font-black uppercase tracking-widest text-[10px] group"
+                        className="w-full flex items-center gap-3 p-3 text-red-300 hover:bg-red-900/30 hover:text-red-100 rounded-xl transition-all font-medium"
                     >
-                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        Logout
+                        <span>🚪</span> Logout
                     </button>
                 </div>
             </aside>
@@ -137,8 +152,10 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
                         </button>
-                        <h2 className="text-lg md:text-xl font-bold text-gray-800 truncate max-w-[150px] md:max-w-none">
-                            {menuItems.find(m => m.path === location.pathname)?.name || 'Student Area'}
+                        <h2 className="text-xl md:text-2xl font-black text-[#3d5afe] tracking-tighter truncate max-w-[250px] md:max-w-none font-['Outfit']">
+                            {location.pathname === '/student/dashboard'
+                                ? 'Debre Berhan University - Online Student Clearance System'
+                                : (menuItems.find(m => m.path === location.pathname)?.name || 'Student Area')}
                         </h2>
                     </div>
 

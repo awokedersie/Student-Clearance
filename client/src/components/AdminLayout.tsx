@@ -34,6 +34,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
         { name: 'Dormitory', path: '/admin/departments/dormitory', icon: '🏠', roles: ['dormitory_admin', 'super_admin'] },
         { name: 'Department', path: '/admin/departments/department', icon: '🏢', roles: ['department_admin', 'super_admin'] },
         { name: 'Registrar', path: '/admin/registrar/dashboard', icon: '📝', roles: ['registrar_admin', 'super_admin'] },
+        { name: 'Audit Logs', path: '/admin/system/audit-logs', icon: '📋', roles: ['system_admin', 'registrar_admin', 'super_admin'] },
         { name: 'Change Password', path: '/admin/change-password', icon: '🔐', roles: ['system_admin', 'super_admin', 'library_admin', 'cafeteria_admin', 'dormitory_admin', 'department_admin', 'registrar_admin'] },
     ];
 

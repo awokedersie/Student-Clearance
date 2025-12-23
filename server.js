@@ -11,7 +11,7 @@ const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
-const mysql = require('mysql2/promise');
+
 
 const app = express();
 
@@ -31,17 +31,8 @@ app.use(session({
 }));
 
 // ==================== DATABASE CONFIGURATION ====================
-const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'clearance',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-};
-
-const pool = mysql.createPool(dbConfig);
+// ==================== DATABASE CONFIGURATION ====================
+const pool = require('./config/db');
 
 // Database middleware
 app.use((req, res, next) => {
@@ -64,7 +55,8 @@ const routes = {
     dormitory: require('./routes/dormitory'),
     department: require('./routes/department'),
     registrar: require('./routes/registrar'),
-    protector: require('./routes/protector')
+    protector: require('./routes/protector'),
+    library: require('./routes/library')
 };
 
 // ==================== ROUTE REGISTRATION ====================
@@ -78,6 +70,7 @@ app.use('/admin', routes.dormitory);
 app.use('/admin', routes.department);
 app.use('/admin', routes.registrar);
 app.use('/admin', routes.protector);
+app.use('/admin', routes.library);
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'client/dist')));
@@ -130,7 +123,7 @@ app.listen(PORT, () => {
     console.log('='.repeat(50));
     console.log(`🚀 Server running on: http://localhost:${PORT}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🗄️  Database: ${dbConfig.database}@${dbConfig.host}`);
+    // dbConfig is now encapsulated in config/db.js
     console.log('='.repeat(50));
     console.log(`👨‍🎓 Student Login: http://localhost:${PORT}/login`);
     console.log(`👨‍💼 Admin Login: http://localhost:${PORT}/admin/login`);

@@ -11,6 +11,10 @@ interface ClearanceRecord {
     status: string;
     reason: string;
     updated_at: string;
+    is_locked?: boolean | number;
+    can_approve?: boolean | number;
+    can_reject?: boolean | number;
+    locked_by_dept?: string | null;
 }
 
 const DepartmentDashboard: React.FC = () => {
@@ -25,6 +29,12 @@ const DepartmentDashboard: React.FC = () => {
     const [selectedItems, setSelectedItems] = useState<{ id: number, studentId: string }[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [bulkDropdownOpen, setBulkDropdownOpen] = useState(false);
+    const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+    const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
+        setNotification({ message, type });
+        setTimeout(() => setNotification(null), 5000);
+    };
 
     const apiPath = location.pathname; // e.g. /admin/departments/library
 
@@ -78,13 +88,15 @@ const DepartmentDashboard: React.FC = () => {
             });
 
             if (response.data.success) {
-                alert(response.data.message || 'Updated successfully!');
+                showMessage(response.data.message || 'Updated successfully!', 'success');
+            } else {
+                showMessage(response.data.message || 'Action failed', 'error');
             }
             fetchData();
         } catch (error: any) {
             console.error('Status update failed:', error);
             const errorMsg = error.response?.data?.message || 'Status update failed. Please try again.';
-            alert(errorMsg);
+            showMessage(errorMsg, 'error');
         } finally {
             setSubmitting(false);
         }
@@ -116,16 +128,16 @@ const DepartmentDashboard: React.FC = () => {
 
             if (response.data.success) {
                 const msg = response.data.message || (response.data.messages && response.data.messages.map((m: any) => m.text || m.msg).join('\n')) || 'Bulk action completed successfully!';
-                alert(msg);
+                showMessage(msg, 'success');
                 setSelectedItems([]);
                 fetchData();
             } else {
                 const msg = response.data.message || (response.data.messages && response.data.messages.map((m: any) => m.text || m.msg).join('\n')) || 'Bulk action failed';
-                alert(msg);
+                showMessage(msg, 'error');
             }
         } catch (error: any) {
             console.error('Bulk action failed:', error);
-            alert(error.response?.data?.message || 'Bulk action failed. Please try again.');
+            showMessage(error.response?.data?.message || 'Bulk action failed. Please try again.', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -143,10 +155,13 @@ const DepartmentDashboard: React.FC = () => {
     };
 
     const toggleSelectAll = (requests: any[]) => {
-        if (selectedItems.length === requests.length) {
+        // Only select non-locked requests
+        const selectableRequests = requests.filter(req => !req.is_locked);
+
+        if (selectedItems.length === selectableRequests.length && selectableRequests.length > 0) {
             setSelectedItems([]);
         } else {
-            setSelectedItems(requests.map(req => ({ id: req.id, studentId: req.student_id })));
+            setSelectedItems(selectableRequests.map(req => ({ id: req.id, studentId: req.student_id })));
         }
     };
 
@@ -176,6 +191,30 @@ const DepartmentDashboard: React.FC = () => {
     return (
         <AdminLayout user={user}>
             <div className="p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* Modern Inline Notification Banner */}
+                {notification && (
+                    <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className={`flex items-center gap-4 px-8 py-5 rounded-[25px] border shadow-sm ${notification.type === 'success'
+                            ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+                            : 'bg-rose-50 border-rose-100 text-rose-800'
+                            }`}>
+                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-inner ${notification.type === 'success' ? 'bg-emerald-100' : 'bg-rose-100'
+                                }`}>
+                                {notification.type === 'success' ? '✅' : '🚨'}
+                            </div>
+                            <div className="flex flex-col flex-1">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-50 mb-0.5">
+                                    {notification.type === 'success' ? 'System Success' : 'System Error'}
+                                </p>
+                                <p className="text-sm font-bold tracking-tight">{notification.message}</p>
+                            </div>
+                            <button
+                                onClick={() => setNotification(null)}
+                                className="hover:opacity-50 transition-opacity p-2 text-current"
+                            >✕</button>
+                        </div>
+                    </div>
+                )}
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
@@ -358,12 +397,14 @@ const DepartmentDashboard: React.FC = () => {
                                         <tr key={req.student_id} className={`hover:bg-indigo-50/20 transition-all group ${selectedItems.some(item => item.studentId === req.student_id) ? 'bg-indigo-50/30' : ''}`}>
                                             {!isProtector && (
                                                 <td className="p-6">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedItems.some(item => item.studentId === req.student_id)}
-                                                        onChange={() => toggleSelection(req.id, req.student_id)}
-                                                        className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer"
-                                                    />
+                                                    {!req.is_locked && (
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedItems.some(item => item.studentId === req.student_id)}
+                                                            onChange={() => toggleSelection(req.id, req.student_id)}
+                                                            className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer"
+                                                        />
+                                                    )}
                                                 </td>
                                             )}
                                             <td className="p-6">
@@ -371,14 +412,27 @@ const DepartmentDashboard: React.FC = () => {
                                                 <p className="text-xs font-mono text-gray-400 mt-1">{req.student_id}</p>
                                             </td>
                                             <td className="p-6">
-                                                <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${req.status === 'approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                                    req.status === 'rejected' ? 'bg-red-50 text-red-600 border-red-100' :
-                                                        'bg-amber-50 text-amber-600 border-amber-100'
-                                                    }`}>
-                                                    <span className={`w-2 h-2 rounded-full ${req.status === 'approved' ? 'bg-emerald-400' :
-                                                        req.status === 'rejected' ? 'bg-red-400' : 'bg-amber-400'
-                                                        }`}></span>
-                                                    {req.status}
+                                                <div className="flex flex-col gap-1">
+                                                    <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${req.status === 'approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                        req.status === 'rejected' ? 'bg-red-50 text-red-600 border-red-100' :
+                                                            'bg-amber-50 text-amber-600 border-amber-100'
+                                                        }`}>
+                                                        <span className={`w-2 h-2 rounded-full ${req.status === 'approved' ? 'bg-emerald-400' :
+                                                            req.status === 'rejected' ? 'bg-red-400' : 'bg-amber-400'
+                                                            }`}></span>
+                                                        {req.status}
+                                                    </div>
+                                                    {req.is_locked && (
+                                                        <div className="inline-flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-indigo-400 px-2 py-0.5 bg-indigo-50/50 rounded-md border border-indigo-100/50 self-start mt-1">
+                                                            <span>🔒</span>
+                                                            Stage Finalized
+                                                        </div>
+                                                    )}
+                                                    {!req.is_locked && !req.can_approve && req.status === 'pending' && (
+                                                        <div className="inline-flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-amber-500 px-2 py-0.5 bg-amber-50 rounded-md border border-amber-100 self-start mt-1">
+                                                            <span>⏳</span> Waiting for Previous Stages
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 {req.reason && <p className="text-[10px] text-gray-400 italic mt-2 leading-relaxed max-w-xs">{req.reason}</p>}
                                             </td>
@@ -393,54 +447,61 @@ const DepartmentDashboard: React.FC = () => {
                                             {!isProtector && (
                                                 <td className="p-6 text-right relative">
                                                     <div className="flex justify-end">
-                                                        <div className="relative dropdown-container">
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setActiveDropdown(activeDropdown === req.student_id ? null : req.student_id);
-                                                                }}
-                                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeDropdown === req.student_id
-                                                                    ? 'bg-gray-900 text-white shadow-lg'
-                                                                    : 'bg-white text-gray-600 border border-gray-200 hover:border-indigo-400 hover:text-indigo-600 shadow-sm'
-                                                                    }`}
-                                                            >
-                                                                Actions
-                                                                <span className={`transition-transform duration-200 ${activeDropdown === req.student_id ? 'rotate-180' : ''}`}>▾</span>
-                                                            </button>
-
-                                                            {activeDropdown === req.student_id && (
-                                                                <div
-                                                                    className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
-                                                                    onClick={(e) => e.stopPropagation()}
+                                                        {!!req.is_locked ? (
+                                                            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-gray-50 border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                                🔒 Stage Finalized
+                                                            </div>
+                                                        ) : (
+                                                            <div className="relative dropdown-container">
+                                                                <button
+                                                                    disabled={submitting}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setActiveDropdown(activeDropdown === req.student_id ? null : req.student_id);
+                                                                    }}
+                                                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeDropdown === req.student_id
+                                                                        ? 'bg-gray-900 text-white shadow-lg'
+                                                                        : 'bg-white text-gray-600 border border-gray-200 hover:border-indigo-400 hover:text-indigo-600 shadow-sm'
+                                                                        }`}
                                                                 >
-                                                                    <button
-                                                                        disabled={submitting || req.status === 'approved'}
-                                                                        onClick={() => {
-                                                                            handleUpdateStatus(req.student_id, req.id, 'approved');
-                                                                            setActiveDropdown(null);
-                                                                        }}
-                                                                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-emerald-50 text-emerald-600 transition-colors disabled:opacity-30"
+                                                                    Actions
+                                                                    <span className={`transition-transform duration-200 ${activeDropdown === req.student_id ? 'rotate-180' : ''}`}>▾</span>
+                                                                </button>
+
+                                                                {activeDropdown === req.student_id && (
+                                                                    <div
+                                                                        className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
+                                                                        onClick={(e) => e.stopPropagation()}
                                                                     >
-                                                                        <span className="text-lg">✅</span>
-                                                                        <span className="text-[10px] font-black uppercase tracking-widest">Approve</span>
-                                                                    </button>
-                                                                    <button
-                                                                        disabled={submitting}
-                                                                        onClick={() => {
-                                                                            const reason = prompt('Reason for rejection:');
-                                                                            if (reason) {
-                                                                                handleUpdateStatus(req.student_id, req.id, 'rejected', reason);
-                                                                            }
-                                                                            setActiveDropdown(null);
-                                                                        }}
-                                                                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-rose-50 text-rose-600 transition-colors disabled:opacity-30"
-                                                                    >
-                                                                        <span className="text-lg">✕</span>
-                                                                        <span className="text-[10px] font-black uppercase tracking-widest">Reject</span>
-                                                                    </button>
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                                        <button
+                                                                            disabled={submitting || !req.can_approve}
+                                                                            onClick={() => {
+                                                                                handleUpdateStatus(req.student_id, req.id, 'approved');
+                                                                                setActiveDropdown(null);
+                                                                            }}
+                                                                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-emerald-50 text-emerald-600 transition-colors disabled:opacity-30"
+                                                                        >
+                                                                            <span className="text-lg">✅</span>
+                                                                            <span className="text-[10px] font-black uppercase tracking-widest">Approve</span>
+                                                                        </button>
+                                                                        <button
+                                                                            disabled={submitting || !req.can_reject}
+                                                                            onClick={() => {
+                                                                                const reason = prompt('Reason for rejection:');
+                                                                                if (reason) {
+                                                                                    handleUpdateStatus(req.student_id, req.id, 'rejected', reason);
+                                                                                }
+                                                                                setActiveDropdown(null);
+                                                                            }}
+                                                                            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-rose-50 text-rose-600 transition-colors disabled:opacity-30"
+                                                                        >
+                                                                            <span className="text-lg">✕</span>
+                                                                            <span className="text-[10px] font-black uppercase tracking-widest">Reject</span>
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </td>
                                             )}

@@ -38,14 +38,13 @@ const SystemDashboard: React.FC = () => {
     const cards = [
         { title: 'Total Students', value: stats.total_students, icon: '👨‍🎓', color: 'from-blue-500 to-indigo-600', link: '/admin/system/manage-students' },
         { title: 'Total Staff', value: stats.total_admins, icon: '👨‍💼', color: 'from-purple-500 to-pink-600', link: '/admin/system/manage-admins' },
-        { title: 'Active Requests', value: '42', icon: '📝', color: 'from-orange-400 to-red-500', link: '/admin/clearance-settings' },
-        { title: 'System Status', value: 'ACTIVE', icon: '⚡', color: 'from-emerald-400 to-teal-600', link: '/admin/clearance-settings' },
+        { title: 'System Status', value: 'ACTIVE', icon: '⚡', color: 'from-orange-400 to-red-500', link: '/admin/clearance-settings' },
     ];
 
     return (
         <AdminLayout user={user}>
             <div className="p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {cards.map((card, i) => (
                         <Link
                             key={i}
@@ -76,14 +75,20 @@ const SystemDashboard: React.FC = () => {
                             Quick Management Control
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <button className="p-4 flex items-center gap-4 bg-gray-50 hover:bg-indigo-50 rounded-2xl border border-gray-100 transition-colors text-left group">
+                            <button
+                                onClick={() => navigate('/admin/system/manage-students?action=add')}
+                                className="p-4 flex items-center gap-4 bg-gray-50 hover:bg-indigo-50 rounded-2xl border border-gray-100 transition-colors text-left group"
+                            >
                                 <span className="p-3 bg-white rounded-xl shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">➕</span>
                                 <div>
                                     <p className="font-bold text-gray-800">Add New Student</p>
                                     <p className="text-xs text-gray-500">Register a new profile</p>
                                 </div>
                             </button>
-                            <button className="p-4 flex items-center gap-4 bg-gray-50 hover:bg-emerald-50 rounded-2xl border border-gray-100 transition-colors text-left group">
+                            <button
+                                onClick={() => navigate('/admin/clearance-settings')}
+                                className="p-4 flex items-center gap-4 bg-gray-50 hover:bg-emerald-50 rounded-2xl border border-gray-100 transition-colors text-left group"
+                            >
                                 <span className="p-3 bg-white rounded-xl shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition-colors">⚙️</span>
                                 <div>
                                     <p className="font-bold text-gray-800">Clearance Status</p>

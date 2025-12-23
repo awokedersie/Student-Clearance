@@ -72,16 +72,15 @@ const ClearanceSettings: React.FC = () => {
                     <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-50"></div>
 
                     <div className="relative z-10 flex items-center gap-6">
-                        <div className={`w-24 h-24 rounded-[30px] flex items-center justify-center text-5xl shadow-inner ${system_status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' :
-                            system_status === 'SCHEDULED' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'
+                        <div className={`w-24 h-24 rounded-[30px] flex items-center justify-center text-5xl shadow-inner ${status_class.includes('emerald') ? 'bg-emerald-50 text-emerald-600' :
+                            status_class.includes('amber') ? 'bg-amber-50 text-amber-600' :
+                                status_class.includes('orange') ? 'bg-orange-50 text-orange-600' : 'bg-red-50 text-red-600'
                             }`}>
                             {status_icon}
                         </div>
                         <div>
                             <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 italic">Current System State</p>
-                            <h2 className={`text-4xl font-black ${system_status === 'ACTIVE' ? 'text-emerald-600' :
-                                system_status === 'SCHEDULED' ? 'text-amber-600' : 'text-red-600'
-                                }`}>{system_status}</h2>
+                            <h2 className={`text-4xl font-black ${status_class.split(' ')[0]}`}>{system_status}</h2>
                             <p className="text-gray-500 font-medium mt-1">Academic Year: <span className="text-indigo-600 font-bold">{clearance_settings.academic_year}</span></p>
                         </div>
                     </div>
@@ -111,10 +110,20 @@ const ClearanceSettings: React.FC = () => {
                         </h3>
 
                         <form
-                            key={`${clearance_settings.start_date}-${clearance_settings.end_date}-${clearance_settings.is_active}`}
+                            key={`${clearance_settings.start_date}-${clearance_settings.end_date}-${clearance_settings.is_active}-${clearance_settings.academic_year}`}
                             onSubmit={handleSubmit}
                             className="space-y-6"
                         >
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Academic Year</label>
+                                <input
+                                    required
+                                    name="academic_year"
+                                    defaultValue={clearance_settings.academic_year}
+                                    placeholder="e.g. 2025-2026"
+                                    className="w-full bg-gray-50 border border-gray-100 px-6 py-5 rounded-3xl focus:ring-4 focus:ring-indigo-500/10 focus:outline-none transition-all font-black text-indigo-600"
+                                />
+                            </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Clearance Starts</label>
                                 <input
@@ -141,7 +150,7 @@ const ClearanceSettings: React.FC = () => {
                                         type="checkbox"
                                         name="is_active"
                                         className="sr-only peer"
-                                        defaultChecked={clearance_settings.is_active === 1}
+                                        defaultChecked={!!clearance_settings.is_active}
                                     />
                                     <div className="w-14 h-8 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600"></div>
                                 </div>

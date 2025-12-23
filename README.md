@@ -42,26 +42,44 @@ The **DBU Clearance System** is a comprehensive web-based platform designed to d
 
 ---
 
-## 🔄 System Workflow
+## 🔄 System Workflow & Approval Logic
 
+The DBU Clearance System follows a strict **Sequential Chain of Responsibility** to ensure all university property is returned and obligations met before a student is cleared.
+
+### 🌊 The Clearance Chain
+1. **System Activation**: The System Admin opens the clearance window for the specific academic year.
+2. **Student Request**: Students submit a clearance request through their portal.
+3. **Sequential Approval**:
+    - **Stage 1: Library** (Physical books & digital resources)
+    - **Stage 2: Cafeteria** (Dining hall fees & equipment)
+    - **Stage 3: Dormitory** (Housing items & key returns)
+    - **Stage 4: Department Head** (Departmental equipment & grades)
+    - **Stage 5: Registrar (Final Seal)** (Official records & certificate generation)
+
+### 🔒 Adaptive Locking Mechanism
+To balance security with administrative flexibility, the system employs a smart locking logic:
+- **Decision Reversibility**: An administrator can toggle their decision (Approved ↔ Rejected) as long as the student has not been approved by the **next** department in the chain. 
+    - *Example: The Library admin can "Undo" an approval if they find a mistake later, provided the Cafeteria has not yet approved that student.*
+- **Permanent Lock**: Once a subsequent stage approves a student, all preceding approvals for that student become **permanently locked** to prevent tampering with a finalized chain.
+- **Registrar Finality**: The Registrar's approval is the definitive action that mark's a student's system status as "Cleared" and triggers the generation of the Digital Clearance Certificate.
+
+### 📊 Workflow Diagram
 ```mermaid
 graph TD
-    A[Admin: Opens Clearance Period] --> B[Student: Submits Request]
-    B --> C{Department Checks}
-    C --> |Library| D1[Library Admin]
-    C --> |Cafeteria| D2[Cafeteria Admin]
-    C --> |Dormitory| D3[Dormitory Admin]
-    C --> |Head| D4[Dept Head]
+    Start[Admin Opens Period] --> Request[Student Submits Request]
+    Request --> Lib[Library Approval]
+    Lib -- Locks Library --> Caf[Cafeteria Approval]
+    Caf -- Locks Cafeteria --> Dor[Dormitory Approval]
+    Dor -- Locks Dormitory --> Dept[Department Head Approval]
+    Dept -- Locks Dept Head --> Reg[Registrar Final Seal]
     
-    D1 & D2 & D3 & D4 --> |Approval Flow| E[Registrar Review]
-    E --> F{Final Decision}
-    F --> |Approved| G[Clearance Generated + Email Sent]
-    F --> |Rejected| H[Student Notified + Re-apply]
+    Reg --> Success[Final Clearance Generated]
+    Reg --> Notify[Automated Email Notification Sent]
     
-    style A fill:#4f46e5,color:#fff
-    style B fill:#1e293b,color:#fff
-    style G fill:#22c55e,color:#fff
-    style H fill:#ef4444,color:#fff
+    style Start fill:#4f46e5,color:#fff
+    style Request fill:#1e293b,color:#fff
+    style Success fill:#22c55e,color:#fff
+    style Reg fill:#3d5afe,color:#fff
 ```
 
 ---

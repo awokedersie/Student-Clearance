@@ -15,6 +15,7 @@ import DepartmentDashboard from './components/DepartmentDashboard';
 import About from './components/About';
 import ForgotPassword from './components/ForgotPassword';
 import Contact from './components/Contact';
+import AuditLogs from './components/AuditLogs';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/admin/system/dashboard" element={<SystemDashboard />} />
         <Route path="/admin/system/manage-students" element={<ManageStudents />} />
         <Route path="/admin/system/manage-admins" element={<ManageAdmins />} />
+        <Route path="/admin/system/audit-logs" element={<AuditLogs />} />
         <Route path="/admin/clearance-settings" element={<ClearanceSettings />} />
         <Route path="/admin/departments/:deptName" element={<DepartmentDashboard />} />
         <Route path="/admin/registrar/dashboard" element={<DepartmentDashboard />} />
