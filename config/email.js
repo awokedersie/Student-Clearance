@@ -16,25 +16,21 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    },
-    // Add timeout and debug options
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-    debug: process.env.NODE_ENV !== 'production', // Enable debug in development
-    logger: process.env.NODE_ENV !== 'production' // Enable logger in development
+    }
 });
 
-// Verify SMTP connection on startup (only in production to catch issues early)
-if (process.env.NODE_ENV === 'production' && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-    transporter.verify((error, success) => {
-        if (error) {
-            console.error('❌ SMTP Connection Error:', error.message);
-            console.error('   Please check your EMAIL_USER and EMAIL_PASS environment variables');
-        } else {
-            console.log('✅ SMTP Server is ready to send emails');
-        }
-    });
+// Verify SMTP connection asynchronously (don't block startup)
+if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    // Use setTimeout to not block the module loading
+    setTimeout(() => {
+        transporter.verify((error, success) => {
+            if (error) {
+                console.error('❌ SMTP Connection Error:', error.message);
+            } else {
+                console.log('✅ SMTP Server is ready to send emails');
+            }
+        });
+    }, 2000); // Wait 2 seconds after startup
 }
 
 module.exports = transporter;
