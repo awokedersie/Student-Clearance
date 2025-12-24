@@ -4,8 +4,17 @@ const transporter = require('../config/email');
 // Function to send verification code email
 async function sendVerificationCode(studentEmail, studentName, verificationCode) {
     try {
+        // Check if email credentials are configured
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+            console.error('❌ Email credentials not configured! EMAIL_USER or EMAIL_PASS missing in environment variables');
+            return false;
+        }
+
+        console.log(`📧 Attempting to send email to: ${studentEmail}`);
+        console.log(`📧 Using email account: ${process.env.EMAIL_USER}`);
+
         const mailOptions = {
-            from: `"DBU Clearance System" <${process.env.EMAIL_USER || 'amanneby004@gmail.com'}>`,
+            from: `"DBU Clearance System" <${process.env.EMAIL_USER}>`,
             to: studentEmail,
             subject: 'Password Reset Verification Code',
             html: `
@@ -38,10 +47,11 @@ async function sendVerificationCode(studentEmail, studentName, verificationCode)
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Verification code email sent:', info.messageId);
+        console.log('✅ Verification code email sent successfully:', info.messageId);
         return true;
     } catch (error) {
-        console.error('❌ Email sending failed:', error);
+        console.error('❌ Email sending failed with error:', error.message);
+        console.error('❌ Full error details:', error);
         return false;
     }
 }

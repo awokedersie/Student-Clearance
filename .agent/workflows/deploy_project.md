@@ -64,8 +64,16 @@ Since Render's free database expires after 30 days, we successfully use **Neon**
    | `DB_NAME` | `neondb` (Default Neon DB name) |
    | `SESSION_SECRET` | (Type any random long string, e.g. `mySuperSecretKey123`) |
    | `PGSSLMODE` | `require` (Important for Neon!) |
+   | `EMAIL_USER` | `your-email@gmail.com` (Gmail account for sending emails) |
+   | `EMAIL_PASS` | `your-app-password` (Gmail App Password - see note below) |
 
    *> **Tip**: If you have a full connection string `postgres://...`, you can parse it to get the Host, User, Password, etc., or just check the Neon dashboard for "Connection Details".*
+
+   *> **Gmail App Password**: The `EMAIL_PASS` must be a Gmail App Password (not your regular password). To generate one:*
+   - *Enable 2-Factor Authentication on your Google Account*
+   - *Go to Security → App Passwords*
+   - *Generate a new app password for "Mail"*
+   - *Use the 16-character password as `EMAIL_PASS`*
 
 6. Click **Create Web Service**.
 
