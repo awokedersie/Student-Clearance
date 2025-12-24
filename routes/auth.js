@@ -83,14 +83,4 @@ router.get('/current-user', authController.getCurrentUser);
 // Check session endpoint (for debugging)
 router.get('/check-session', authController.checkSession);
 
-// Debug endpoint to check email configuration (remove in production after testing)
-router.get('/debug-email-config', (req, res) => {
-    res.json({
-        emailConfigured: !!(process.env.EMAIL_USER && process.env.EMAIL_PASS),
-        emailUser: process.env.EMAIL_USER ? `${process.env.EMAIL_USER.substring(0, 3)}***@${process.env.EMAIL_USER.split('@')[1]}` : 'NOT SET',
-        emailPassConfigured: !!process.env.EMAIL_PASS,
-        nodeEnv: process.env.NODE_ENV || 'development'
-    });
-});
-
 module.exports = router;
