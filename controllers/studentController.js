@@ -587,25 +587,61 @@ exports.getClearanceRequestData = async (req, res) => {
                 "SELECT table_name FROM information_schema.tables WHERE table_name = 'clearance_settings'"
             );
             if (tables.length > 0) {
-                const [settingsResult] = await db.execute(
-                    "SELECT start_date, end_date, is_active FROM clearance_settings WHERE academic_year = ?",
-                    [academicYear]
+                // 1. Priority: Find the currently ACTIVE setting
+                let [settingsResult] = await db.execute(
+                    "SELECT * FROM clearance_settings WHERE is_active = TRUE ORDER BY id DESC LIMIT 1"
                 );
+
+                // 2. Fallback: If no active setting, find the most relevant recent one
+                if (settingsResult.length === 0) {
+                    [settingsResult] = await db.execute(
+                        "SELECT * FROM clearance_settings WHERE academic_year = ? OR academic_year = ? ORDER BY id DESC LIMIT 1",
+                        [academicYear, `${currentYear - 1}-${currentYear}`]
+                    );
+                }
+
                 if (settingsResult.length > 0) {
                     clearanceSettings = settingsResult[0];
                     const now = new Date();
                     const start = new Date(clearanceSettings.start_date);
                     const end = new Date(clearanceSettings.end_date);
 
-                    if (clearanceSettings.is_active && now >= start && now <= end) {
-                        systemActive = true;
-                        daysRemaining = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
-                    } else if (now < start) {
-                        systemMessage = "Clearance period has not started yet.";
-                    } else if (now > end) {
-                        systemMessage = "Clearance period has ended.";
+                    if (clearanceSettings.is_active) {
+                        // Double check date validity even if active, or trust the flag? 
+                        // Trust the flag but warn if date is weird? 
+                        // The prompt says "even if the system is on it says System Closed".
+                        // So we should respect is_active = true mainly.
+                        if (now > end) {
+                            // If active but expired, technically we should probably allow it or update dates?
+                            // But usually 'active' means GO. 
+                            // adminController.handleAction 'activate' ensures dates are valid.
+                            // So we can trust it.
+                        }
+
+                        // We check dates just for calculating days remaining
+                        if (now >= start && now <= end) {
+                            systemActive = true;
+                            daysRemaining = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
+                        } else if (now > end && clearanceSettings.is_active) {
+                            // Edge case: Admin forced it active but date is past. 
+                            // We treat it as ACTIVE but maybe show 0 days remaining or negative?
+                            systemActive = true;
+                            daysRemaining = 0;
+                        } else if (now < start && clearanceSettings.is_active) {
+                            // Admin forced active before start date
+                            systemActive = true;
+                            daysRemaining = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
+                        }
+
                     } else {
-                        systemMessage = "Clearance system is currently inactive.";
+                        // Not active
+                        if (now < start) {
+                            systemMessage = "Clearance period has not started yet.";
+                        } else if (now > end) {
+                            systemMessage = "Clearance period has ended.";
+                        } else {
+                            systemMessage = "Clearance system is currently inactive.";
+                        }
                     }
                 } else {
                     systemMessage = "No clearance schedule found for this academic year.";
