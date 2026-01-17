@@ -340,14 +340,26 @@ const ManageStudents: React.FC = () => {
                                     <div className="space-y-2">
                                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">First Name</label>
                                         <input
-                                            required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            required
+                                            value={formData.name}
+                                            onChange={e => {
+                                                const value = e.target.value;
+                                                const capitalized = value.charAt(0).toUpperCase() + value.slice(1);
+                                                setFormData({ ...formData, name: capitalized });
+                                            }}
                                             className="w-full bg-gray-50 border border-gray-100 px-5 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Last Name</label>
                                         <input
-                                            required value={formData.last_name} onChange={e => setFormData({ ...formData, last_name: e.target.value })}
+                                            required
+                                            value={formData.last_name}
+                                            onChange={e => {
+                                                const value = e.target.value;
+                                                const capitalized = value.charAt(0).toUpperCase() + value.slice(1);
+                                                setFormData({ ...formData, last_name: capitalized });
+                                            }}
                                             className="w-full bg-gray-50 border border-gray-100 px-5 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </div>

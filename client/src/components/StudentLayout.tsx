@@ -45,38 +45,12 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
     };
 
     const menuItems = [
-        {
-            name: 'Dashboard',
-            path: '/student/dashboard',
-            icon: (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-            )
-        },
+        { name: 'Dashboard', path: '/student/dashboard', icon: '📊' },
         { name: 'Profile', path: '/student/profile', icon: '👤' },
-        {
-            name: 'Request Clearance',
-            path: '/student/clearance-request',
-            icon: (
-                <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-            )
-        },
-        {
-            name: 'View Status',
-            path: '/student/clearance-status',
-            icon: (
-                <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
-            )
-        },
+        { name: 'Request Clearance', path: '/student/clearance-request', icon: '📋' },
+        { name: 'View Status', path: '/student/clearance-status', icon: '📈' },
         { name: 'Notifications', path: '/student/notifications', icon: '🔔' },
-        { name: 'Change password', path: '/student/change-password', icon: '🔑' },
-        { name: 'About Us', path: '/about', icon: 'ℹ️' },
-        { name: 'Contact Us', path: '/contact', icon: '✉️' },
+        { name: 'Change Password', path: '/student/change-password', icon: '🔐' },
     ];
 
     return (
@@ -154,10 +128,8 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
                         </button>
-                        <h2 className="text-xl md:text-2xl font-black text-[#3d5afe] tracking-tighter truncate max-w-[250px] md:max-w-none font-['Outfit']">
-                            {location.pathname === '/student/dashboard'
-                                ? 'Debre Berhan University - Online Student Clearance System'
-                                : (menuItems.find(m => m.path === location.pathname)?.name || 'Student Area')}
+                        <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight truncate max-w-[250px] md:max-w-none">
+                            {menuItems.find(m => m.path === location.pathname)?.name || 'Student Area'}
                         </h2>
                     </div>
 

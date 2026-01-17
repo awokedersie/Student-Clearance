@@ -466,11 +466,24 @@ exports.deleteAdmin = async (req, res) => {
     }
 };
 
+const { validateEmail } = require('../utils/emailValidator');
+
 exports.addStudent = async (req, res) => {
     try {
         const db = req.db;
         const { name, last_name, username, password, email, phone, department, year, semester, student_id } = req.body;
         const profile_picture = req.file ? req.file.path.replace(/\\/g, '/') : null;
+
+        // Capitalize first letter of names
+        const capitalizedName = name ? name.charAt(0).toUpperCase() + name.slice(1) : '';
+        const capitalizedLastName = last_name ? last_name.charAt(0).toUpperCase() + last_name.slice(1) : '';
+
+        // Email Validation
+        const emailValidation = await validateEmail(email);
+        if (!emailValidation.isValid) {
+            if (req.file) { try { require('fs').unlinkSync(req.file.path); } catch (e) { } } // Cleanup
+            return res.status(400).json({ success: false, message: emailValidation.error });
+        }
 
         // Generate student_id if not provided
         let final_student_id = student_id;
@@ -499,10 +512,10 @@ exports.addStudent = async (req, res) => {
 
         await db.execute(
             "INSERT INTO student (student_id, name, last_name, username, password, email, phone, department, year, semester, status, profile_picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)",
-            [final_student_id, name, last_name, username, hashedPassword, email, phone, department, year, semester, profile_picture]
+            [final_student_id, capitalizedName, capitalizedLastName, username, hashedPassword, email, phone, department, year, semester, profile_picture]
         );
 
-        await logger.log(req, 'ADD_STUDENT', final_student_id, `Registered new student`, `${name} ${last_name}`);
+        await logger.log(req, 'ADD_STUDENT', final_student_id, `Registered new student`, `${capitalizedName} ${capitalizedLastName}`);
 
         res.json({ success: true, message: 'Student added successfully', student_id: final_student_id });
     } catch (error) {
@@ -516,6 +529,15 @@ exports.updateStudent = async (req, res) => {
         const db = req.db;
         const { student_id, name, last_name, username, password, email, phone, department, year, semester, status } = req.body;
         const profile_picture = req.file ? req.file.path.replace(/\\/g, '/') : null;
+
+        // Email Validation (if changed or present)
+        if (email) {
+            const emailValidation = await validateEmail(email);
+            if (!emailValidation.isValid) {
+                if (req.file) { try { require('fs').unlinkSync(req.file.path); } catch (e) { } } // Cleanup
+                return res.status(400).json({ success: false, message: emailValidation.error });
+            }
+        }
 
         let query = "UPDATE student SET name = ?, last_name = ?, username = ?, email = ?, phone = ?, department = ?, year = ?, semester = ?, status = ?";
         let params = [name, last_name, username, email, phone, department, year, semester, status];

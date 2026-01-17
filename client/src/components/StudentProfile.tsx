@@ -60,6 +60,31 @@ const StudentProfile: React.FC = () => {
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            if (!allowedTypes.includes(file.type)) {
+                setMessage({
+                    type: 'error',
+                    text: 'Only JPG and PNG images are allowed'
+                });
+                e.target.value = ''; // Reset input
+                return;
+            }
+
+            // Validate file size (300KB = 300 * 1024 bytes)
+            const maxSize = 300 * 1024; // 300KB in bytes
+            if (file.size > maxSize) {
+                setMessage({
+                    type: 'error',
+                    text: `Image size must be less than 300KB. Your image is ${(file.size / 1024).toFixed(0)}KB`
+                });
+                e.target.value = ''; // Reset input
+                return;
+            }
+
+            // Clear any previous error messages
+            setMessage(null);
+
             setPhoto(file);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -143,7 +168,7 @@ const StudentProfile: React.FC = () => {
                                 </label>
                             </div>
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-6 leading-relaxed px-4">
-                                Use a professional headshot for your official university records.
+                                JPG or PNG only • Max 300KB
                             </p>
                         </div>
 
@@ -173,9 +198,8 @@ const StudentProfile: React.FC = () => {
                                     <input
                                         type="text"
                                         value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 text-gray-900 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-                                        required
+                                        disabled
+                                        className="w-full bg-gray-50 border border-gray-300 rounded-2xl px-6 py-4 text-gray-700 font-bold cursor-not-allowed"
                                     />
                                 </div>
                                 <div>
@@ -183,9 +207,8 @@ const StudentProfile: React.FC = () => {
                                     <input
                                         type="text"
                                         value={formData.last_name}
-                                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 text-gray-900 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-                                        required
+                                        disabled
+                                        className="w-full bg-gray-50 border border-gray-300 rounded-2xl px-6 py-4 text-gray-700 font-bold cursor-not-allowed"
                                     />
                                 </div>
                                 <div className="sm:col-span-2">
@@ -193,9 +216,8 @@ const StudentProfile: React.FC = () => {
                                     <input
                                         type="email"
                                         value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 text-gray-900 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-                                        required
+                                        disabled
+                                        className="w-full bg-gray-50 border border-gray-300 rounded-2xl px-6 py-4 text-gray-700 font-bold cursor-not-allowed"
                                     />
                                 </div>
                                 <div>
@@ -203,8 +225,8 @@ const StudentProfile: React.FC = () => {
                                     <input
                                         type="text"
                                         value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 text-gray-900 font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+                                        disabled
+                                        className="w-full bg-gray-50 border border-gray-300 rounded-2xl px-6 py-4 text-gray-700 font-bold cursor-not-allowed"
                                     />
                                 </div>
                                 <div>
@@ -213,23 +235,23 @@ const StudentProfile: React.FC = () => {
                                         type="text"
                                         value={formData.department}
                                         disabled
-                                        className="w-full bg-gray-100 border border-gray-200 rounded-2xl px-6 py-4 text-gray-500 font-bold cursor-not-allowed opacity-70"
+                                        className="w-full bg-gray-50 border border-gray-300 rounded-2xl px-6 py-4 text-gray-700 font-bold cursor-not-allowed"
                                     />
                                 </div>
                             </div>
 
                             <button
                                 type="submit"
-                                disabled={submitting}
-                                className="mt-10 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-5 rounded-[24px] font-black transition-all shadow-xl shadow-indigo-600/20 uppercase tracking-widest text-sm flex items-center justify-center gap-3 disabled:opacity-50"
+                                disabled={submitting || !photo}
+                                className="mt-10 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-5 rounded-[24px] font-black transition-all shadow-xl shadow-indigo-600/20 uppercase tracking-widest text-sm flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {submitting ? (
                                     <>
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                        Syncing Records...
+                                        Uploading Photo...
                                     </>
                                 ) : (
-                                    <>Save Profile Updates ⟶</>
+                                    <>Update Profile Photo ⟶</>
                                 )}
                             </button>
                         </div>

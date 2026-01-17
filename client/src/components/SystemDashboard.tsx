@@ -105,12 +105,22 @@ const SystemDashboard: React.FC = () => {
                         <h3 className="text-lg font-black mb-4 relative z-10">System Alerts</h3>
                         <div className="space-y-4 relative z-10">
                             <div className="p-4 bg-white/10 rounded-2xl border border-white/5">
-                                <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Backup Status</p>
-                                <p className="text-sm">Database backup completed successfully 2h ago.</p>
+                                <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Clearance System</p>
+                                <p className="text-sm">
+                                    {stats.approved_students > 0
+                                        ? `${stats.approved_students} student${stats.approved_students !== 1 ? 's' : ''} cleared successfully`
+                                        : 'No clearances processed yet'}
+                                </p>
                             </div>
-                            <div className="p-4 bg-red-500/20 rounded-2xl border border-red-500/10">
-                                <p className="text-xs font-bold text-red-300 uppercase mb-1">Server Note</p>
-                                <p className="text-sm">Maintenance scheduled for Saturday 2:00 AM.</p>
+                            <div className={`p-4 rounded-2xl border ${stats.active_requests > 0 ? 'bg-amber-500/20 border-amber-500/10' : 'bg-emerald-500/20 border-emerald-500/10'}`}>
+                                <p className={`text-xs font-bold uppercase mb-1 ${stats.active_requests > 0 ? 'text-amber-300' : 'text-emerald-300'}`}>
+                                    {stats.active_requests > 0 ? 'Pending Approvals' : 'System Status'}
+                                </p>
+                                <p className="text-sm">
+                                    {stats.active_requests > 0
+                                        ? `${stats.active_requests} student${stats.active_requests !== 1 ? 's' : ''} awaiting clearance approval`
+                                        : 'All clearance requests processed'}
+                                </p>
                             </div>
                         </div>
                     </div>
