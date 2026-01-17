@@ -399,21 +399,30 @@ const ManageStudents: React.FC = () => {
                                             <option value="2">2nd Semester</option>
                                         </select>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Username</label>
-                                        <input
-                                            required value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })}
-                                            className="w-full bg-gray-50 border border-gray-100 px-5 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Password</label>
-                                        <input
-                                            type="password" placeholder={editStudent ? "Leave blank to keep current" : "Minimum 8 characters"}
-                                            value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                            className="w-full bg-gray-50 border border-gray-100 px-5 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
-                                    </div>
+                                    {!editStudent && (
+                                        <>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Username</label>
+                                                <input
+                                                    required={!editStudent}
+                                                    value={formData.username}
+                                                    onChange={e => setFormData({ ...formData, username: e.target.value })}
+                                                    className="w-full bg-gray-50 border border-gray-100 px-5 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Password</label>
+                                                <input
+                                                    type="password"
+                                                    placeholder="Minimum 8 characters"
+                                                    required={!editStudent}
+                                                    value={formData.password}
+                                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                                    className="w-full bg-gray-50 border border-gray-100 px-5 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                />
+                                            </div>
+                                        </>
+                                    )}
                                     <div className="space-y-2">
                                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Profile Photo (Max 2MB)</label>
                                         <input

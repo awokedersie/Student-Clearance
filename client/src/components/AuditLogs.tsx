@@ -15,19 +15,15 @@ interface AuditLog {
 }
 
 const AuditLogs: React.FC = () => {
-    const [logs, setLogs] = useState<AuditLog[]>([]);
+    const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState<any>(null);
-    const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, pages: 1 });
 
     const fetchLogs = async (page = 1) => {
         setLoading(true);
         try {
             const response = await axios.get(`/admin/system/audit-logs/data?page=${page}`);
             if (response.data.success) {
-                setLogs(response.data.logs);
-                setUser(response.data.user || null);
-                setPagination(response.data.pagination);
+                setData(response.data);
             }
         } catch (error) {
             console.error('Error fetching audit logs:', error);
@@ -66,6 +62,19 @@ const AuditLogs: React.FC = () => {
         return colors[action] || 'bg-gray-100 text-gray-700';
     };
 
+    if (loading && !data) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="p-20 text-center">
+                    <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-500 font-black uppercase tracking-widest text-[10px]">Loading Audit Logs...</p>
+                </div>
+            </div>
+        );
+    }
+
+    const { logs = [], user, pagination = { page: 1, limit: 50, total: 0, pages: 1 } } = data || {};
+
     return (
         <AdminLayout user={user}>
             <div className="p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -103,7 +112,7 @@ const AuditLogs: React.FC = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    logs.map((log) => (
+                                    logs.map((log: AuditLog) => (
                                         <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="px-6 py-4 text-xs font-bold text-gray-600 font-mono whitespace-nowrap">
                                                 {formatDate(log.created_at)}

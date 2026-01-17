@@ -145,15 +145,16 @@ const ClearanceSettings: React.FC = () => {
                             </div>
 
                             <div className="flex items-center gap-4 p-6 bg-indigo-50/50 rounded-3xl border border-indigo-100/30">
-                                <div className="relative inline-flex items-center cursor-pointer">
+                                <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                         type="checkbox"
                                         name="is_active"
                                         className="sr-only peer"
-                                        defaultChecked={!!clearance_settings.is_active}
+                                        checked={!!clearance_settings.is_active}
+                                        onChange={() => handleAction(clearance_settings.is_active ? 'deactivate' : 'activate')}
                                     />
                                     <div className="w-14 h-8 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600"></div>
-                                </div>
+                                </label>
                                 <span className="text-sm font-black text-indigo-900 uppercase tracking-widest">Master Enable Switch</span>
                             </div>
 
