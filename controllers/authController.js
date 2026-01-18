@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const transporter = require('../config/email');
+const responseHandler = require('../utils/responseHandler');
 
 // Function to send verification code email
 async function sendVerificationCode(studentEmail, studentName, verificationCode) {
@@ -103,26 +104,15 @@ exports.login = async (req, res) => {
 
                 console.log('🎉 Student login successful for:', user.full_name);
 
-                return res.json({
-                    success: true,
-                    message: 'Login successful',
-                    user: req.session.user
-                });
+                return responseHandler.success(res, { user: req.session.user }, 'Login successful');
             }
         }
 
         console.log('❌ Login failed - invalid credentials for username:', username);
-        res.status(401).json({
-            success: false,
-            message: 'Invalid username or password'
-        });
+        return responseHandler.unauthorized(res, 'Invalid username or password');
 
     } catch (error) {
-        console.error('💥 Student login error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Login failed due to server error'
-        });
+        return responseHandler.error(res, 'Login failed due to server error', 500, error);
     }
 };
 

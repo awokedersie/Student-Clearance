@@ -14,22 +14,25 @@ exports.getDashboardData = async (req, res) => {
         console.log('📊 Fetching final clearance records...');
 
         let query = `
-            SELECT fc.*, CONCAT(fc.name, ' ', fc.last_name) as student_name,
-                   fc.date_sent as updated_at
-            FROM final_clearance fc
-            WHERE fc.status = 'approved' AND fc.academic_year = ?
+            SELECT student_id, name, last_name, 
+                   CONCAT(name, ' ', last_name) as student_name,
+                   requested_at as date_sent,
+                   requested_at as updated_at,
+                   status
+            FROM clearance_requests
+            WHERE target_department = 'registrar' AND status = 'approved' AND academic_year = ?
         `;
 
         let queryParams = [currentAcademicYear];
 
         // Apply search filter
         if (search) {
-            query += " AND (fc.student_id ILIKE ? OR fc.name ILIKE ? OR fc.last_name ILIKE ?)";
+            query += " AND (student_id ILIKE ? OR name ILIKE ? OR last_name ILIKE ?)";
             const searchTerm = `%${search}%`;
             queryParams.push(searchTerm, searchTerm, searchTerm);
         }
 
-        query += " ORDER BY fc.date_sent DESC";
+        query += " ORDER BY requested_at DESC";
 
         const [clearanceRecords] = await db.execute(query, queryParams);
 

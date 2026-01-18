@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import AdminLayout from './AdminLayout';
 import { Link, useNavigate } from 'react-router-dom';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const SystemDashboard: React.FC = () => {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -30,100 +30,162 @@ const SystemDashboard: React.FC = () => {
         fetchStats();
     }, [navigate]);
 
-    if (loading) return <div className="p-8 text-center text-gray-500 font-medium">Initialising System Dashboard...</div>;
+    if (loading) return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-gray-500 font-bold animate-pulse uppercase tracking-widest text-xs">Initialising Analytics...</p>
+            </div>
+        </div>
+    );
+
     if (!data) return <div className="p-8 text-center text-red-500 font-bold">Failed to load system data</div>;
 
     const { stats, user } = data;
 
-    const cards = [
-        { title: 'Total Students', value: stats.total_students, icon: '👨‍🎓', color: 'from-blue-500 to-indigo-600', link: '/admin/system/manage-students' },
-        { title: 'Total Staff', value: stats.total_admins, icon: '👨‍💼', color: 'from-purple-500 to-pink-600', link: '/admin/system/manage-admins' },
-        { title: 'System Status', value: 'ACTIVE', icon: '⚡', color: 'from-orange-400 to-red-500', link: '/admin/clearance-settings' },
+    // Prepare chart data
+    const studentData = [
+        { name: 'Active', value: stats.active_students, color: '#10b981' },
+        { name: 'Inactive', value: stats.inactive_students, color: '#ef4444' }
+    ];
+
+    const COLORS = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6'];
+
+    const deptChartData = stats.department_stats?.reduce((acc: any[], curr: any) => {
+        if (curr.target_department === 'finance') return acc;
+
+        // Capitalize name (e.g. 'library' -> 'Library')
+        const deptName = curr.target_department.charAt(0).toUpperCase() + curr.target_department.slice(1);
+
+        let dept = acc.find(d => d.name === deptName);
+        if (!dept) {
+            dept = { name: deptName, approved: 0, rejected: 0, pending: 0 };
+            acc.push(dept);
+        }
+        dept[curr.status] = parseInt(curr.count);
+        return acc;
+    }, []) || [];
+
+    const statCards = [
+        { title: 'Total Students', value: stats.total_students, sub: `${stats.active_students} Active`, icon: '🎓', color: 'indigo' },
+        { title: 'Final Approvals', value: stats.approved_students, sub: 'Cleared', icon: '✅', color: 'emerald' },
+        { title: 'Staff Users', value: stats.total_admins, sub: 'Administrators', icon: '💼', color: 'blue' },
     ];
 
     return (
         <AdminLayout user={user}>
-            <div className="p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {cards.map((card, i) => (
-                        <Link
-                            key={i}
-                            to={card.link}
-                            className={`relative overflow-hidden p-6 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 group`}
-                        >
-                            <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-90 group-hover:opacity-100 transition-opacity`}></div>
-                            <div className="relative z-10 flex flex-col h-full">
-                                <div className="flex justify-between items-start mb-4">
-                                    <span className="text-4xl group-hover:scale-110 transition-transform">{card.icon}</span>
-                                    <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
-                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                        </svg>
-                                    </div>
-                                </div>
-                                <h3 className="text-white/80 font-bold uppercase tracking-widest text-[10px] mb-1">{card.title}</h3>
-                                <div className="text-3xl font-black text-white">{card.value}</div>
+            <div className="p-8 space-y-8 animate-in fade-in duration-700 bg-[#f8fafc] min-h-full">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">System Overview</h1>
+                        <p className="text-gray-500 font-medium">Real-time clearance analytics & performance tracking</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => window.location.reload()} className="p-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+
+                {/* Stat Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {statCards.map((card, i) => (
+                        <div key={i} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                            <div className="relative z-10">
+                                <span className="text-2xl mb-4 block">{card.icon}</span>
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{card.title}</h3>
+                                <div className="text-3xl font-black text-gray-900">{card.value}</div>
+                                <p className="text-xs font-bold text-gray-500 mt-1">{card.sub}</p>
                             </div>
-                        </Link>
+                            <div className={`absolute -right-4 -bottom-4 w-24 h-24 bg-${card.color}-50 rounded-full group-hover:scale-110 transition-transform`}></div>
+                        </div>
                     ))}
                 </div>
 
+                {/* Charts Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-                        <h3 className="text-lg font-black text-gray-800 mb-6 flex items-center gap-2">
-                            <span className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">🚀</span>
-                            Quick Management Control
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <button
-                                onClick={() => navigate('/admin/system/manage-students?action=add')}
-                                className="p-4 flex items-center gap-4 bg-gray-50 hover:bg-indigo-50 rounded-2xl border border-gray-100 transition-colors text-left group"
-                            >
-                                <span className="p-3 bg-white rounded-xl shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">➕</span>
-                                <div>
-                                    <p className="font-bold text-gray-800">Add New Student</p>
-                                    <p className="text-xs text-gray-500">Register a new profile</p>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => navigate('/admin/clearance-settings')}
-                                className="p-4 flex items-center gap-4 bg-gray-50 hover:bg-emerald-50 rounded-2xl border border-gray-100 transition-colors text-left group"
-                            >
-                                <span className="p-3 bg-white rounded-xl shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition-colors">⚙️</span>
-                                <div>
-                                    <p className="font-bold text-gray-800">Clearance Status</p>
-                                    <p className="text-xs text-gray-500">Enable/Disable System</p>
-                                </div>
-                            </button>
+                    {/* Main Analytics Chart */}
+                    <div className="lg:col-span-2 bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8">
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="font-black text-gray-900 uppercase tracking-widest text-xs">Departmental Progress</h3>
+                            <div className="flex gap-4 text-[10px] font-bold">
+                                <span className="flex items-center gap-1.5"><i className="w-2 h-2 rounded-full bg-emerald-500"></i> Approved</span>
+                                <span className="flex items-center gap-1.5"><i className="w-2 h-2 rounded-full bg-amber-500"></i> Pending</span>
+                                <span className="flex items-center gap-1.5"><i className="w-2 h-2 rounded-full bg-rose-500"></i> Rejected</span>
+                            </div>
+                        </div>
+                        <div className="h-[300px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={deptChartData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} textAnchor="middle" />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+                                    <Tooltip
+                                        cursor={{ fill: '#f8fafc' }}
+                                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', padding: '12px' }}
+                                    />
+                                    <Bar dataKey="approved" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
+                                    <Bar dataKey="pending" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={20} />
+                                    <Bar dataKey="rejected" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={20} />
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
 
-                    <div className="bg-indigo-900 rounded-3xl shadow-xl p-8 text-white relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-8 opacity-10">
-                            <span className="text-9xl font-black">!</span>
+                    {/* Student Status Pie */}
+                    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 flex flex-col items-center">
+                        <h3 className="font-black text-gray-900 uppercase tracking-widest text-xs mb-8 w-full">Student Health</h3>
+                        <div className="h-[250px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={studentData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {studentData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend verticalAlign="bottom" height={36} />
+                                </PieChart>
+                            </ResponsiveContainer>
                         </div>
-                        <h3 className="text-lg font-black mb-4 relative z-10">System Alerts</h3>
-                        <div className="space-y-4 relative z-10">
-                            <div className="p-4 bg-white/10 rounded-2xl border border-white/5">
-                                <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Clearance System</p>
-                                <p className="text-sm">
-                                    {stats.approved_students > 0
-                                        ? `${stats.approved_students} student${stats.approved_students !== 1 ? 's' : ''} cleared successfully`
-                                        : 'No clearances processed yet'}
-                                </p>
-                            </div>
-                            <div className={`p-4 rounded-2xl border ${stats.active_requests > 0 ? 'bg-amber-500/20 border-amber-500/10' : 'bg-emerald-500/20 border-emerald-500/10'}`}>
-                                <p className={`text-xs font-bold uppercase mb-1 ${stats.active_requests > 0 ? 'text-amber-300' : 'text-emerald-300'}`}>
-                                    {stats.active_requests > 0 ? 'Pending Approvals' : 'System Status'}
-                                </p>
-                                <p className="text-sm">
-                                    {stats.active_requests > 0
-                                        ? `${stats.active_requests} student${stats.active_requests !== 1 ? 's' : ''} awaiting clearance approval`
-                                        : 'All clearance requests processed'}
-                                </p>
-                            </div>
+                        <div className="mt-4 text-center">
+                            <p className="text-2xl font-black text-gray-900">{((stats.active_students / stats.total_students) * 100).toFixed(1)}%</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active Enrollment</p>
                         </div>
                     </div>
+                </div>
+
+                {/* Bottom Controls */}
+                <div className="bg-indigo-900 rounded-[2.5rem] p-10 text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
+                    <div className="relative z-10 max-w-lg text-center md:text-left">
+                        <h2 className="text-3xl font-black mb-2 tracking-tight">Quick System Control</h2>
+                        <p className="text-indigo-200 font-medium">Manage student registrations, department settings, and overall clearance availability from here.</p>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-4 relative z-10">
+                        <button
+                            onClick={() => navigate('/admin/system/manage-students')}
+                            className="bg-white text-indigo-900 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-gray-100 transition-colors shadow-xl"
+                        >
+                            Manage Students
+                        </button>
+                        <button
+                            onClick={() => navigate('/admin/clearance-settings')}
+                            className="bg-emerald-500 text-white px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-emerald-600 transition-colors shadow-xl"
+                        >
+                            System Config
+                        </button>
+                    </div>
+                    {/* Decoration */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
                 </div>
             </div>
         </AdminLayout>

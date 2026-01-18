@@ -181,7 +181,7 @@ exports.getProfileData = async (req, res) => {
         // Mark notifications as read
         try {
             await db.execute(
-                "UPDATE final_clearance SET is_read = TRUE WHERE student_id = ? AND is_read = FALSE",
+                "UPDATE clearance_requests SET is_read = TRUE WHERE student_id = ? AND target_department = 'registrar' AND is_read = FALSE",
                 [studentId]
             );
         } catch (e) {
@@ -429,71 +429,54 @@ exports.getClearanceStatusData = async (req, res) => {
     try {
         const db = req.db;
         const studentId = req.session.user.student_id;
-        const currentYear = new Date().getFullYear();
-        const currentAcademicYear = `${currentYear}-${currentYear + 1}`;
-
-        const tables = {
-            'Library': 'library_clearance',
-            'Cafeteria': 'cafeteria_clearance',
-            'Dormitory': 'dormitory_clearance',
-            'Department': 'department_clearance',
-            'Registrar': 'academicstaff_clearance'
-        };
+        const [settingsRows] = await db.execute("SELECT academic_year FROM clearance_settings ORDER BY id DESC LIMIT 1");
+        const currentAcademicYear = settingsRows[0]?.academic_year || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
 
         let allClearances = [];
         let hasRequests = false;
 
-        for (const [type, tableName] of Object.entries(tables)) {
-            try {
-                // Check if academic_year column exists in PostgreSQL
-                const [columns] = await db.execute(
-                    "SELECT column_name FROM information_schema.columns WHERE table_name = ? AND column_name = 'academic_year'",
-                    [tableName]
-                );
-                const columnExists = columns.length > 0;
+        const [clearances] = await db.execute(
+            `SELECT * FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department != 'finance' ORDER BY requested_at DESC`,
+            [studentId, currentAcademicYear]
+        );
 
-                let query, params;
-                if (columnExists) {
-                    query = `SELECT * FROM ${tableName} WHERE student_id = ? AND academic_year = ? ORDER BY requested_at DESC, id DESC`;
-                    params = [studentId, currentAcademicYear];
-                } else {
-                    query = `SELECT * FROM ${tableName} WHERE student_id = ? ORDER BY requested_at DESC, id DESC`;
-                    params = [studentId];
-                }
+        // Auto-cleanup for this specific student's decommissioned requests
+        db.execute("DELETE FROM clearance_requests WHERE student_id = ? AND target_department = 'finance'", [studentId]).catch(() => { });
 
-                const [clearances] = await db.execute(query, params);
+        clearances.forEach(row => {
+            hasRequests = true;
+            let statusClass = '';
+            const status = row.status?.toLowerCase() || 'pending';
+            if (status === 'pending') statusClass = 'status-pending';
+            else if (status === 'approved') statusClass = 'status-approved';
+            else statusClass = 'status-rejected';
 
-                clearances.forEach(row => {
-                    hasRequests = true;
-                    // Format status
-                    let statusClass = '';
-                    const status = row.status?.toLowerCase() || 'pending';
-                    if (status === 'pending') statusClass = 'status-pending';
-                    else if (status === 'approved') statusClass = 'status-approved';
-                    else statusClass = 'status-rejected';
-
-                    let requestDate = '';
-                    if (row.requested_at) {
-                        requestDate = new Date(row.requested_at).toLocaleDateString('en-US', {
-                            month: 'short', day: 'numeric', year: 'numeric'
-                        });
-                    }
-
-                    allClearances.push({
-                        type: type,
-                        department: row.department || '',
-                        reason: row.reason || '',
-                        status: row.status || 'pending',
-                        statusClass: statusClass,
-                        requestDate: requestDate,
-                        rejectReason: row.reject_reason || '',
-                        tableName: tableName
-                    });
+            let requestDate = '';
+            if (row.requested_at) {
+                requestDate = new Date(row.requested_at).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric'
                 });
-            } catch (error) {
-                console.error(`❌ Error fetching ${type} clearance:`, error.message);
             }
-        }
+
+            const typeMap = {
+                'library': 'Library',
+                'cafeteria': 'Cafeteria',
+                'dormitory': 'Dormitory',
+                'department': 'Department',
+                'registrar': 'Registrar'
+            };
+
+            allClearances.push({
+                type: typeMap[row.target_department] || row.target_department.charAt(0).toUpperCase() + row.target_department.slice(1),
+                department: row.student_department || '',
+                reason: row.reason || '',
+                status: row.status || 'pending',
+                statusClass: statusClass,
+                requestDate: requestDate,
+                rejectReason: row.reject_reason || '',
+                tableName: 'clearance_requests'
+            });
+        });
 
         res.json({
             success: true,
@@ -572,91 +555,90 @@ exports.getClearanceRequestData = async (req, res) => {
     try {
         const db = req.db;
         const studentId = req.session.user.student_id;
-        const currentYear = new Date().getFullYear();
-        const nextYear = currentYear + 1;
-        const academicYear = `${currentYear}-${nextYear}`;
 
         let systemActive = false;
         let systemMessage = "";
         let clearanceSettings = null;
         let hasCurrentClearance = false;
         let daysRemaining = 0;
+        let dbAcademicYear = null;
 
         try {
-            const [tables] = await db.execute(
-                "SELECT table_name FROM information_schema.tables WHERE table_name = 'clearance_settings'"
+            // 1. Priority: Find the currently ACTIVE setting
+            let [settingsResult] = await db.execute(
+                "SELECT * FROM clearance_settings WHERE is_active = TRUE ORDER BY id DESC LIMIT 1"
             );
-            if (tables.length > 0) {
-                // 1. Priority: Find the currently ACTIVE setting
-                let [settingsResult] = await db.execute(
-                    "SELECT * FROM clearance_settings WHERE is_active = TRUE ORDER BY id DESC LIMIT 1"
+
+            // 2. Fallback: If no active setting, find the most recent one
+            if (settingsResult.length === 0) {
+                [settingsResult] = await db.execute(
+                    "SELECT * FROM clearance_settings ORDER BY id DESC LIMIT 1"
                 );
+            }
 
-                // 2. Fallback: If no active setting, find the most relevant recent one
-                if (settingsResult.length === 0) {
-                    [settingsResult] = await db.execute(
-                        "SELECT * FROM clearance_settings WHERE academic_year = ? OR academic_year = ? ORDER BY id DESC LIMIT 1",
-                        [academicYear, `${currentYear - 1}-${currentYear}`]
-                    );
-                }
+            if (settingsResult.length > 0) {
+                clearanceSettings = settingsResult[0];
+                dbAcademicYear = clearanceSettings.academic_year;
+                const now = new Date();
+                const start = new Date(clearanceSettings.start_date);
+                const end = new Date(clearanceSettings.end_date);
 
-                if (settingsResult.length > 0) {
-                    clearanceSettings = settingsResult[0];
-                    const now = new Date();
-                    const start = new Date(clearanceSettings.start_date);
-                    const end = new Date(clearanceSettings.end_date);
+                if (clearanceSettings.is_active) {
+                    // System is marked active by admin
+                    systemActive = true;
 
-                    if (clearanceSettings.is_active) {
-                        // Double check date validity even if active, or trust the flag? 
-                        // Trust the flag but warn if date is weird? 
-                        // The prompt says "even if the system is on it says System Closed".
-                        // So we should respect is_active = true mainly.
-                        if (now > end) {
-                            // If active but expired, technically we should probably allow it or update dates?
-                            // But usually 'active' means GO. 
-                            // adminController.handleAction 'activate' ensures dates are valid.
-                            // So we can trust it.
-                        }
-
-                        // We check dates just for calculating days remaining
-                        if (now >= start && now <= end) {
-                            systemActive = true;
-                            daysRemaining = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
-                        } else if (now > end && clearanceSettings.is_active) {
-                            // Edge case: Admin forced it active but date is past. 
-                            // We treat it as ACTIVE but maybe show 0 days remaining or negative?
-                            systemActive = true;
-                            daysRemaining = 0;
-                        } else if (now < start && clearanceSettings.is_active) {
-                            // Admin forced active before start date
-                            systemActive = true;
-                            daysRemaining = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
-                        }
-
+                    // Calculate time remaining based on dates
+                    if (now >= start && now <= end) {
+                        daysRemaining = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
+                    } else if (now > end) {
+                        // Expired but still active flag? Admin probably wants it open
+                        daysRemaining = 0;
                     } else {
-                        // Not active
-                        if (now < start) {
-                            systemMessage = "Clearance period has not started yet.";
-                        } else if (now > end) {
-                            systemMessage = "Clearance period has ended.";
-                        } else {
-                            systemMessage = "Clearance system is currently inactive.";
-                        }
+                        // Future start date but active flag? Show countdown but allow?
+                        // Usually active flag = GO.
+                        daysRemaining = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
                     }
                 } else {
-                    systemMessage = "No clearance schedule found for this academic year.";
+                    // Not active flag - determine reason
+                    if (now < start) {
+                        systemMessage = "Clearance period has not started yet.";
+                    } else if (now > end) {
+                        systemMessage = "Clearance period has ended.";
+                    } else {
+                        systemMessage = "Clearance system is currently inactive.";
+                    }
                 }
+            } else {
+                systemMessage = "No clearance schedule found. Please contact administration.";
             }
-        } catch (e) { console.error(e); }
+
+        } catch (e) {
+            console.error('Error fetching settings:', e);
+        }
+
+        // Default to a calculated year if none found in DB
+        const academicYear = dbAcademicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
 
         const [students] = await db.execute("SELECT status FROM student WHERE student_id = ?", [studentId]);
         const isStudentActive = students.length > 0 && students[0].status === 'active';
 
-        // Check if any clearance request exists for the current academic year
-        const [libCheck] = await db.execute("SELECT id FROM library_clearance WHERE student_id = ? AND academic_year = ? LIMIT 1", [studentId, academicYear]);
+        // Check if any clearance request exists for the determined academic year
+        const [libCheck] = await db.execute("SELECT id FROM clearance_requests WHERE student_id = ? AND academic_year = ? LIMIT 1", [studentId, academicYear]);
         hasCurrentClearance = libCheck.length > 0;
 
         const canSubmitRequests = systemActive && isStudentActive && !hasCurrentClearance;
+
+        // Generate a specific message explaining why they can't submit
+        let canSubmitMessage = "";
+        if (!canSubmitRequests) {
+            if (!systemActive) {
+                canSubmitMessage = systemMessage || "The clearance system is currently closed by the administrator.";
+            } else if (!isStudentActive) {
+                canSubmitMessage = "Your student account is currently inactive. Please contact the Registrar Office to reactivate your profile.";
+            } else if (hasCurrentClearance) {
+                canSubmitMessage = `You have already submitted a clearance request for the ${academicYear} academic year. Please check your status in the 'My Status' section.`;
+            }
+        }
 
         res.json({
             success: true,
@@ -668,6 +650,7 @@ exports.getClearanceRequestData = async (req, res) => {
             isStudentActive,
             hasCurrentClearance,
             canSubmitRequests,
+            canSubmitMessage,
             academicYear: academicYear
         });
     } catch (error) {
@@ -680,7 +663,8 @@ exports.submitClearanceRequest = async (req, res) => {
         const db = req.db;
         const studentId = req.session.user.student_id;
         const { reason, request_type, submit_all_clearance } = req.body;
-        const academicYear = `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
+        const [settingsRows] = await db.execute("SELECT academic_year FROM clearance_settings ORDER BY id DESC LIMIT 1");
+        const academicYear = settingsRows[0]?.academic_year || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
 
         if (!reason) {
             return res.status(400).json({ success: false, message: 'Reason is required' });
@@ -691,24 +675,18 @@ exports.submitClearanceRequest = async (req, res) => {
         const student = students[0];
 
         if (submit_all_clearance) {
-            const tableMap = {
-                'library': 'library_clearance',
-                'cafeteria': 'cafeteria_clearance',
-                'dormitory': 'dormitory_clearance',
-                'department': 'department_clearance',
-                'registrar': 'academicstaff_clearance'
-            };
+            const depts = ['library', 'cafeteria', 'dormitory', 'department', 'registrar'];
 
-            for (const [dept, tableName] of Object.entries(tableMap)) {
+            for (const dept of depts) {
                 const [existing] = await db.execute(
-                    `SELECT id FROM ${tableName} WHERE student_id = ? AND academic_year = ?`,
-                    [studentId, academicYear]
+                    `SELECT id FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = ?`,
+                    [studentId, academicYear, dept]
                 );
 
                 if (existing.length === 0) {
                     await db.execute(
-                        `INSERT INTO ${tableName} (student_id, name, last_name, department, reason, status, academic_year, requested_at) VALUES (?, ?, ?, ?, ?, 'pending', ?, NOW())`,
-                        [studentId, student.name, student.last_name, student.department, reason, academicYear]
+                        `INSERT INTO clearance_requests (student_id, name, last_name, student_department, target_department, reason, status, academic_year, requested_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, NOW())`,
+                        [studentId, student.name, student.last_name, student.department, dept, reason, academicYear]
                     );
                 }
             }
@@ -719,23 +697,10 @@ exports.submitClearanceRequest = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Request type is required' });
         }
 
-        const tableMap = {
-            'library': 'library_clearance',
-            'cafeteria': 'cafeteria_clearance',
-            'dormitory': 'dormitory_clearance',
-            'department': 'department_clearance',
-            'registrar': 'academicstaff_clearance'
-        };
-
-        const tableName = tableMap[request_type];
-        if (!tableName) {
-            return res.status(400).json({ success: false, message: 'Invalid request type' });
-        }
-
         // Check if already requested
         const [existing] = await db.execute(
-            `SELECT id FROM ${tableName} WHERE student_id = ? AND academic_year = ?`,
-            [studentId, academicYear]
+            `SELECT id FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = ?`,
+            [studentId, academicYear, request_type]
         );
 
         if (existing.length > 0) {
@@ -743,15 +708,14 @@ exports.submitClearanceRequest = async (req, res) => {
         }
 
         await db.execute(
-            `INSERT INTO ${tableName} (student_id, name, last_name, department, reason, status, academic_year, requested_at) VALUES (?, ?, ?, ?, ?, 'pending', ?, NOW())`,
-            [studentId, student.name, student.last_name, student.department, reason, academicYear]
+            `INSERT INTO clearance_requests (student_id, name, last_name, student_department, target_department, reason, status, academic_year, requested_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, NOW())`,
+            [studentId, student.name, student.last_name, student.department, request_type, reason, academicYear]
         );
 
         res.json({ success: true, message: 'Clearance request submitted successfully' });
-
     } catch (error) {
         console.error('Submit clearance error:', error);
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: 'Error submitting clearance request' });
     }
 };
 
@@ -760,18 +724,19 @@ exports.getNotificationsData = async (req, res) => {
         const db = req.db;
         const studentId = req.session.user.student_id;
 
+        // Fetch notifications from clearance_requests where target is registrar
         const [notifications] = await db.execute(
-            "SELECT * FROM final_clearance WHERE student_id = ? ORDER BY date_sent DESC",
+            "SELECT *, notification_message as message, requested_at as date_sent FROM clearance_requests WHERE student_id = ? AND target_department = 'registrar' AND (notification_message IS NOT NULL OR status != 'pending') ORDER BY requested_at DESC",
             [studentId]
         );
 
         // Mark as read
         await db.execute(
-            "UPDATE final_clearance SET is_read = TRUE WHERE student_id = ? AND is_read = FALSE",
+            "UPDATE clearance_requests SET is_read = TRUE WHERE student_id = ? AND target_department = 'registrar' AND is_read = FALSE",
             [studentId]
         );
 
-        // Check if download button should show (if latest is approved)
+        // Check if download button should show (if latest registrar status is approved)
         const showDownloadButton = notifications.length > 0 && notifications[0].status === 'approved';
 
         res.json({
@@ -792,7 +757,7 @@ exports.getUnreadNotificationCount = async (req, res) => {
         const db = req.db;
         const studentId = req.session.user.student_id;
         const [rows] = await db.execute(
-            "SELECT COUNT(*) as count FROM final_clearance WHERE student_id = ? AND is_read = FALSE",
+            "SELECT COUNT(*) as count FROM clearance_requests WHERE student_id = ? AND target_department = 'registrar' AND is_read = FALSE AND (notification_message IS NOT NULL OR status != 'pending')",
             [studentId]
         );
         res.json({ success: true, count: rows[0]?.count || 0 });
@@ -806,10 +771,11 @@ exports.downloadCertificate = async (req, res) => {
     try {
         const db = req.db;
         const studentId = req.session.user.student_id;
+        const { jsPDF } = require("jspdf");
 
         // Check if student is approved for final clearance
         const [clearance] = await db.execute(
-            "SELECT * FROM final_clearance WHERE student_id = ? AND status = 'approved' ORDER BY date_sent DESC LIMIT 1",
+            "SELECT * FROM clearance_requests WHERE student_id = ? AND target_department = 'registrar' AND status = 'approved' ORDER BY requested_at DESC LIMIT 1",
             [studentId]
         );
 
@@ -824,408 +790,130 @@ exports.downloadCertificate = async (req, res) => {
         }
 
         const cert = clearance[0];
-        const date = new Date(cert.date_sent).toLocaleDateString('en-US', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric'
+        const studentName = `${req.session.user.name} ${req.session.user.lastName}`;
+
+        // Fetch all department approvals to get admin names
+        const [approvals] = await db.execute(
+            "SELECT target_department, approved_by, approved_at FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND status = 'approved'",
+            [studentId, cert.academic_year]
+        );
+
+        const approvalMap = {};
+        approvals.forEach(app => {
+            approvalMap[app.target_department] = app.approved_by || 'Verified System Admin';
         });
 
-        // Fetch approval details from all clearance tables
-        const approvalData = [];
+        // Create PDF
+        const doc = new jsPDF({
+            orientation: "p",
+            unit: "mm",
+            format: "a4"
+        });
 
-        const departments = [
-            { name: 'Library', table: 'library_clearance', title: 'Library Administrator', action: 'APPROVE_STUDENT' },
-            { name: 'Cafeteria', table: 'cafeteria_clearance', title: 'Cafeteria Administrator', action: 'APPROVE_STUDENT' },
-            { name: 'Dormitory', table: 'dormitory_clearance', title: 'Dormitory Administrator', action: 'APPROVE_STUDENT' },
-            { name: 'Department Head', table: 'department_clearance', title: 'Department Head', action: 'APPROVE_STUDENT' },
-            { name: 'Registrar Office', table: 'academicstaff_clearance', title: 'Registrar Officer', action: 'APPROVE_STUDENT' }
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const startY = 30;
+
+        // --- Header ---
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(22);
+        doc.text("DEBRE BERHAN UNIVERSITY", pageWidth / 2, startY, { align: "center" });
+
+        doc.setFontSize(16);
+        doc.text("OFFICE OF THE REGISTRAR", pageWidth / 2, startY + 10, { align: "center" });
+
+        doc.setDrawColor(0);
+        doc.setLineWidth(0.5);
+        doc.line(20, startY + 15, pageWidth - 20, startY + 15);
+
+        doc.setFontSize(18);
+        doc.text("STUDENT CLEARANCE CERTIFICATE", pageWidth / 2, startY + 28, { align: "center" });
+
+        // --- Student Details ---
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
+        const detailsY = startY + 45;
+
+        doc.text(`This is to certify that:`, 20, detailsY);
+        doc.setFont("helvetica", "bold");
+        doc.text(studentName.toUpperCase(), 70, detailsY);
+
+        doc.setFont("helvetica", "normal");
+        doc.text(`Student ID:`, 20, detailsY + 8);
+        doc.setFont("helvetica", "bold");
+        doc.text(studentId.toString(), 70, detailsY + 8);
+
+        doc.setFont("helvetica", "normal");
+        doc.text(`Department:`, 20, detailsY + 16);
+        doc.setFont("helvetica", "bold");
+        doc.text((cert.student_department || 'N/A').toUpperCase(), 70, detailsY + 16);
+
+        doc.setFont("helvetica", "normal");
+        doc.text(`Academic Year:`, 20, detailsY + 24);
+        doc.setFont("helvetica", "bold");
+        doc.text((cert.academic_year || new Date().getFullYear().toString()).toString(), 70, detailsY + 24);
+
+        // --- Clearance Statement ---
+        const stmtY = detailsY + 40;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        const text = `The above mentioned student has successfully cleared all obligations with the following departments and is free from any university liabilities.`;
+        doc.text(doc.splitTextToSize(text, pageWidth - 40), 20, stmtY);
+
+        // --- Approver List ---
+        let approverY = stmtY + 15;
+        doc.setFontSize(10);
+
+        const depts = [
+            { id: 'department', label: 'Department Head' },
+            { id: 'library', label: 'Library' },
+            { id: 'dormitory', label: 'Proctor' },
+            { id: 'cafeteria', label: 'Cafeteria' },
+            { id: 'registrar', label: 'Registrar' }
         ];
 
-        for (const dept of departments) {
-            try {
-                const [records] = await db.execute(
-                    `SELECT status, approved_at, requested_at, approved_by FROM ${dept.table} WHERE student_id = ? AND academic_year = ? AND status = 'approved' ORDER BY id DESC LIMIT 1`,
-                    [studentId, cert.academic_year]
-                );
+        depts.forEach((dept, index) => {
+            const approverName = approvalMap[dept.id] || 'System Verified';
+            const yPos = approverY + (index * 8);
 
-                if (records.length > 0) {
-                    const approvalDate = records[0].approved_at || records[0].requested_at;
-                    let adminName = records[0].approved_by;
+            doc.setFont("helvetica", "bold");
+            doc.text(`${dept.label}:`, 30, yPos);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Approved by ${approverName}`, 80, yPos);
 
-                    // Fallback to audit logs if approved_by is missing (legacy records)
-                    if (!adminName) {
-                        adminName = dept.title; // Default
-                        try {
-                            const [auditRecords] = await db.execute(
-                                `SELECT admin_name FROM audit_logs 
-                                 WHERE target_student_id = ? 
-                                 AND action = ? 
-                                 AND details ILIKE ?
-                                 ORDER BY created_at DESC LIMIT 1`,
-                                [studentId, dept.action, `%${dept.name}%`]
-                            );
+            // Replaced '✔' with text '(Cleared)' to avoid encoding issues
+            doc.setTextColor(0, 100, 0);
+            doc.text("(Cleared)", 160, yPos);
+            doc.setTextColor(0);
+        });
 
-                            if (auditRecords.length > 0 && auditRecords[0].admin_name) {
-                                adminName = auditRecords[0].admin_name;
-                            }
-                        } catch (auditErr) {
-                            console.error(`Error fetching admin name for ${dept.name}:`, auditErr);
-                        }
-                    }
+        // --- Signature Section ---
+        const sigY = approverY + (depts.length * 8) + 30;
 
-                    approvalData.push({
-                        department: dept.name,
-                        title: dept.title,
-                        adminName: adminName,
-                        date: approvalDate ? new Date(approvalDate).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                        }) : 'N/A'
-                    });
-                }
-            } catch (err) {
-                console.error(`Error fetching ${dept.name} approval:`, err);
-            }
-        }
+        doc.setLineWidth(0.3);
+        doc.line(120, sigY, 190, sigY); // Signature line
+        doc.setFont("helvetica", "bold");
+        doc.text("Registrar Officer Signature", 135, sigY + 5);
 
-        // Generate approval timeline HTML
-        const approvalTimeline = approvalData.map(approval => `
-            <div class="approval-item">
-                <div class="approval-header">
-                    <span class="approval-dept">✓ ${approval.department}</span>
-                    <span class="approval-date">${approval.date}</span>
-                </div>
-                <div class="signature-box">
-                    <div class="sig-line"></div>
-                    <div class="sig-name">${approval.adminName}</div>
-                    <div class="sig-title">${approval.title}</div>
-                </div>
-            </div>
-        `).join('');
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(8);
+        doc.text(`(Date: ${new Date().toLocaleDateString()})`, 140, sigY + 10);
 
-        const html = `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <title>Clearance Certificate - ${cert.student_id}</title>
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@400;600;700&display=swap');
-                    
-                    body {
-                        background: #f0f2f5;
-                        margin: 0;
-                        padding: 40px;
-                        font-family: 'Inter', sans-serif;
-                    }
+        // Footer
+        const footerY = doc.internal.pageSize.getHeight() - 15;
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text("System Generated by DBU Clearance System - Valid without physical stamp if verified online.", pageWidth / 2, footerY, { align: "center" });
 
-                    .certificate-container {
-                        background: white;
-                        max-width: 900px;
-                        margin: 0 auto;
-                        padding: 60px;
-                        border: 15px solid #1e293b;
-                        position: relative;
-                        box-shadow: 0 40px 100px rgba(0,0,0,0.1);
-                    }
+        // Output
+        const pdfBuffer = doc.output("arraybuffer");
 
-                    .certificate-inner {
-                        border: 2px solid #e2e8f0;
-                        padding: 40px;
-                        position: relative;
-                    }
-
-                    .header {
-                        text-align: center;
-                        margin-bottom: 40px;
-                    }
-
-                    .university-name {
-                        font-family: 'Cinzel', serif;
-                        font-size: 28px;
-                        font-weight: 700;
-                        color: #1e293b;
-                        margin: 0;
-                        letter-spacing: 2px;
-                    }
-
-                    .office-name {
-                        font-size: 14px;
-                        text-transform: uppercase;
-                        letter-spacing: 4px;
-                        color: #64748b;
-                        margin-top: 10px;
-                        font-weight: 700;
-                    }
-
-                    .title {
-                        text-align: center;
-                        font-family: 'Cinzel', serif;
-                        font-size: 42px;
-                        font-weight: 700;
-                        color: #0f172a;
-                        margin: 40px 0;
-                        text-transform: uppercase;
-                    }
-
-                    .content {
-                        text-align: center;
-                        line-height: 1.8;
-                        color: #334155;
-                        font-size: 18px;
-                    }
-
-                    .student-name {
-                        font-size: 24px;
-                        font-weight: 700;
-                        color: #1e293b;
-                        text-decoration: underline;
-                        margin: 20px 0;
-                        display: block;
-                    }
-
-                    .details {
-                        margin-top: 40px;
-                        display: grid;
-                        grid-template-columns: 1fr 1fr;
-                        gap: 20px;
-                        text-align: left;
-                        border-top: 1px solid #f1f5f9;
-                        padding-top: 30px;
-                    }
-
-                    .detail-item b {
-                        color: #64748b;
-                        font-size: 12px;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                        display: block;
-                    }
-
-                    .detail-item span {
-                        font-weight: 700;
-                        color: #1e293b;
-                    }
-
-                    .approval-section {
-                        margin-top: 50px;
-                        padding-top: 30px;
-                        border-top: 2px solid #e2e8f0;
-                    }
-
-                    .approval-section-title {
-                        font-family: 'Cinzel', serif;
-                        font-size: 18px;
-                        font-weight: 700;
-                        color: #1e293b;
-                        text-align: center;
-                        margin-bottom: 30px;
-                        text-transform: uppercase;
-                        letter-spacing: 2px;
-                    }
-
-                    .approval-grid {
-                        display: grid;
-                        grid-template-columns: repeat(2, 1fr);
-                        gap: 30px;
-                    }
-
-                    .approval-item {
-                        background: #f8fafc;
-                        padding: 20px;
-                        border-radius: 8px;
-                        border: 1px solid #e2e8f0;
-                    }
-
-                    .approval-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-bottom: 15px;
-                    }
-
-                    .approval-dept {
-                        font-weight: 700;
-                        color: #059669;
-                        font-size: 14px;
-                    }
-
-                    .approval-date {
-                        font-size: 11px;
-                        color: #64748b;
-                        font-weight: 600;
-                    }
-
-                    .signature-box {
-                        margin-top: 20px;
-                    }
-
-                    .sig-line {
-                        border-top: 2px solid #1e293b;
-                        margin-bottom: 8px;
-                        width: 100%;
-                    }
-
-                    .sig-name {
-                        font-size: 13px;
-                        font-weight: 700;
-                        color: #1e293b;
-                        margin-bottom: 4px;
-                    }
-
-                    .sig-title {
-                        font-size: 11px;
-                        font-weight: 700;
-                        text-transform: uppercase;
-                        color: #64748b;
-                        letter-spacing: 1px;
-                    }
-
-                    .footer {
-                        margin-top: 60px;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                    }
-
-                    .seal {
-                        width: 120px;
-                        height: 120px;
-                        border: 4px double #1e293b;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-weight: 700;
-                        font-family: 'Cinzel', serif;
-                        color: #1e293b;
-                        font-size: 10px;
-                        text-align: center;
-                        padding: 10px;
-                        opacity: 0.8;
-                        transform: rotate(-15deg);
-                    }
-
-                    @media print {
-                        @page { margin: 0; size: auto; }
-                        body { background: white; padding: 0; margin: 0; -webkit-print-color-adjust: exact; }
-                        .certificate-container { 
-                            box-shadow: none; 
-                            border: 5px solid #1e293b; 
-                            width: 100%; 
-                            max-width: 100%; 
-                            margin: 0; 
-                            padding: 20px; 
-                            box-sizing: border-box; 
-                            height: 100vh;
-                        }
-                        .certificate-inner { padding: 20px; border: 2px solid #e2e8f0; }
-                        .print-btn { display: none; }
-                        
-                        /* Compact layout for print */
-                        .header { margin-bottom: 20px; }
-                        .university-name { font-size: 24px; }
-                        .title { margin: 20px 0; font-size: 32px; }
-                        .content { margin-left: 20px !important; }
-                        .form-row { margin-bottom: 10px !important; font-size: 16px !important; }
-                        .approval-section { margin-top: 20px; padding-top: 20px; }
-                        .approval-section-title { font-size: 16px; margin-bottom: 20px; }
-                        .approval-grid { gap: 15px; }
-                        .approval-item { padding: 10px; }
-                        .approval-header { margin-bottom: 5px; }
-                        .signature-box { margin-top: 10px; }
-                        .footer { margin-top: 30px; }
-                        .seal { width: 100px; height: 100px; font-size: 9px; }
-                        
-                        /* Hide background graphics if any */
-                        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                    }
-
-                    /* Regular screen styles fallback */
-                    .print-btn {
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        background: #1e293b;
-                        color: white;
-                        border: none;
-                        padding: 12px 24px;
-                        border-radius: 8px;
-                        font-weight: 700;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-                        transition: all 0.2s;
-                    }
-                    .print-btn:hover {
-                        background: #0f172a;
-                        transform: translateY(-2px);
-                    }
-                </style>
-            </head>
-            <body>
-                <button class="print-btn" onclick="window.print()">
-                    <span>🖨️</span> Print / Save as PDF
-                </button>
-
-                <div class="certificate-container">
-                    <div class="certificate-inner">
-                        <div class="header">
-                            <h1 class="university-name">Debre Berhan University</h1>
-                            <p class="office-name">Office of the Registrar</p>
-                        </div>
-
-                        <h2 class="title">Clearance Certificate</h2>
-
-                        <div class="content" style="text-align: left; margin-left: 50px;">
-                            <div class="form-row" style="margin-bottom: 20px; font-size: 20px;">
-                                <span style="font-weight: 700;">Student Name:</span> 
-                                <span style="border-bottom: 2px solid #333; padding: 0 10px; min-width: 300px; display: inline-block;">${cert.name} ${cert.last_name}</span>
-                            </div>
-                            <div class="form-row" style="margin-bottom: 20px; font-size: 20px;">
-                                <span style="font-weight: 700;">Student ID:</span> 
-                                <span style="border-bottom: 2px solid #333; padding: 0 10px; min-width: 200px; display: inline-block;">${cert.student_id}</span>
-                            </div>
-                            <div class="form-row" style="margin-bottom: 20px; font-size: 20px;">
-                                <span style="font-weight: 700;">Department:</span> 
-                                <span style="border-bottom: 2px solid #333; padding: 0 10px; min-width: 300px; display: inline-block;">${cert.department || 'Academic Department'}</span>
-                            </div>
-                            <div class="form-row" style="margin-bottom: 20px; font-size: 20px;">
-                                <span style="font-weight: 700;">Academic Year:</span> 
-                                <span style="border-bottom: 2px solid #333; padding: 0 10px; min-width: 150px; display: inline-block;">${cert.academic_year}</span>
-                            </div>
-                        </div>
-
-                        <div style="text-align: center; margin: 40px 0; font-size: 16px; color: #555;">
-                            This is to certify that the above mentioned student has successfully fulfilled all academic and administrative requirements and is hereby cleared of all obligations to the University.
-                        </div>
-
-                        <div class="approval-section">
-                            <div class="approval-section-title" style="text-decoration: underline;">Approval Timeline</div>
-                            <div class="approval-grid">
-                                ${approvalTimeline}
-                            </div>
-                        </div>
-
-                        <div class="footer">
-                            <div class="seal">
-                                DEBRE BERHAN UNIVERSITY<br>OFFICIAL SEAL
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `;
-
-        res.send(html);
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename=DBU_Clearance_${studentId}.pdf`);
+        res.send(Buffer.from(pdfBuffer));
 
     } catch (error) {
-        console.error('Certificate download error:', error);
-        res.status(500).send('Error generating certificate');
+        console.error("💥 Download certificate error:", error);
+        res.status(500).send("Failed to generate certificate");
     }
 };
 

@@ -21,11 +21,11 @@ exports.getDashboardData = async (req, res) => {
                 SUM(CASE WHEN dc.status = 'pending' THEN 1 ELSE 0 END) as pending,
                 SUM(CASE WHEN dc.status = 'approved' THEN 1 ELSE 0 END) as approved,
                 SUM(CASE WHEN dc.status = 'rejected' THEN 1 ELSE 0 END) as rejected
-            FROM dormitory_clearance dc
+            FROM clearance_requests dc
             LEFT JOIN (
-                SELECT student_id FROM cafeteria_clearance WHERE status = 'approved' AND academic_year = ? GROUP BY student_id
+                SELECT student_id FROM clearance_requests WHERE status = 'approved' AND academic_year = ? AND target_department = 'cafeteria' GROUP BY student_id
             ) cc ON dc.student_id = cc.student_id
-            WHERE dc.academic_year = ?
+            WHERE dc.academic_year = ? AND dc.target_department = 'dormitory'
             AND (dc.status != 'pending' OR cc.student_id IS NOT NULL)
         `, [currentAcademicYear, currentAcademicYear]);
 
@@ -43,33 +43,34 @@ exports.getDashboardData = async (req, res) => {
             SELECT 
                 dc.*, 
                 CONCAT(dc.name, ' ', dc.last_name) as student_name,
+                dc.student_department as department,
                 dc.requested_at as updated_at,
-                (SELECT status FROM library_clearance WHERE student_id = dc.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) as library_status,
-                (SELECT status FROM cafeteria_clearance WHERE student_id = dc.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) as cafeteria_status,
-                (SELECT status FROM department_clearance WHERE student_id = dc.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) as department_status,
-                (SELECT status FROM academicstaff_clearance WHERE student_id = dc.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) as registrar_status,
+                (SELECT status FROM clearance_requests WHERE student_id = dc.student_id AND academic_year = ? AND target_department = 'library' ORDER BY id DESC LIMIT 1) as library_status,
+                (SELECT status FROM clearance_requests WHERE student_id = dc.student_id AND academic_year = ? AND target_department = 'cafeteria' ORDER BY id DESC LIMIT 1) as cafeteria_status,
+                (SELECT status FROM clearance_requests WHERE student_id = dc.student_id AND academic_year = ? AND target_department = 'department' ORDER BY id DESC LIMIT 1) as department_status,
+                (SELECT status FROM clearance_requests WHERE student_id = dc.student_id AND academic_year = ? AND target_department = 'registrar' ORDER BY id DESC LIMIT 1) as registrar_status,
                 (CASE 
                     WHEN dc.status = 'pending' AND 
-                         (SELECT status FROM library_clearance WHERE student_id = dc.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) = 'approved' AND
-                         (SELECT status FROM cafeteria_clearance WHERE student_id = dc.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) = 'approved'
+                         (SELECT status FROM clearance_requests WHERE student_id = dc.student_id AND academic_year = ? AND target_department = 'library' ORDER BY id DESC LIMIT 1) = 'approved' AND
+                         (SELECT status FROM clearance_requests WHERE student_id = dc.student_id AND academic_year = ? AND target_department = 'cafeteria' ORDER BY id DESC LIMIT 1) = 'approved'
                     THEN 2 
                     WHEN dc.status = 'pending' THEN 1 
                     ELSE 0 
                 END) as priority_order
-            FROM dormitory_clearance dc 
+            FROM clearance_requests dc 
             LEFT JOIN (
                 SELECT student_id 
-                FROM library_clearance 
-                WHERE status = 'approved' AND academic_year = ?
+                FROM clearance_requests 
+                WHERE status = 'approved' AND academic_year = ? AND target_department = 'library'
                 GROUP BY student_id
             ) lc ON dc.student_id = lc.student_id
             LEFT JOIN (
                 SELECT student_id 
-                FROM cafeteria_clearance 
-                WHERE status = 'approved' AND academic_year = ?
+                FROM clearance_requests 
+                WHERE status = 'approved' AND academic_year = ? AND target_department = 'cafeteria'
                 GROUP BY student_id
             ) cc ON dc.student_id = cc.student_id
-            WHERE dc.academic_year = ?
+            WHERE dc.academic_year = ? AND dc.target_department = 'dormitory'
             AND (dc.status != 'pending' OR cc.student_id IS NOT NULL)
         `;
 
@@ -168,7 +169,7 @@ exports.handleAction = async (req, res) => {
         let processedCount = 0;
         for (const id of requestIds) {
             // Check if student is locked by subsequent stages or already approved by dormitory
-            const [clearanceRows] = await db.execute("SELECT student_id, academic_year, name, last_name, status FROM dormitory_clearance WHERE id = ?", [id]);
+            const [clearanceRows] = await db.execute("SELECT student_id, academic_year, name, last_name, status FROM clearance_requests WHERE id = ? AND target_department = 'dormitory'", [id]);
             if (clearanceRows.length === 0) continue;
 
             const { student_id, academic_year, name, last_name } = clearanceRows[0];
@@ -177,8 +178,8 @@ exports.handleAction = async (req, res) => {
             if (true) { // Logic to check locks
                 const [lockedBy] = await db.execute(`
                     SELECT 
-                        (SELECT COUNT(*) FROM department_clearance WHERE student_id = ? AND academic_year = ? AND status = 'approved') as department_approved,
-                        (SELECT COUNT(*) FROM academicstaff_clearance WHERE student_id = ? AND academic_year = ? AND status = 'approved') as registrar_approved
+                        (SELECT COUNT(*) FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = 'department' AND status = 'approved') as department_approved,
+                        (SELECT COUNT(*) FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = 'registrar' AND status = 'approved') as registrar_approved
                 `, [student_id, academic_year, student_id, academic_year]);
 
                 const locks = lockedBy[0];
@@ -189,15 +190,15 @@ exports.handleAction = async (req, res) => {
             }
 
             await db.execute(
-                "UPDATE dormitory_clearance SET status = ?, reject_reason = ?, approved_at = CASE WHEN ? = 'approved' THEN CURRENT_TIMESTAMP ELSE approved_at END, approved_by = ?, requested_at = NOW() WHERE id = ?",
+                "UPDATE clearance_requests SET status = ?, reject_reason = ?, approved_at = CASE WHEN ? = 'approved' THEN CURRENT_TIMESTAMP ELSE approved_at END, approved_by = ?, requested_at = NOW() WHERE id = ?",
                 [status, reason || null, status, req.session.user.full_name, id]
             );
 
             // Audit Log
             const actionLabel = status === 'approved' ? 'APPROVE_STUDENT' : 'REJECT_STUDENT';
             const logDetails = status === 'approved'
-                ? 'Dormitory clearance granted'
-                : `Dormitory clearance rejected. Reason: ${reason || 'No reason specified'}`;
+                ? `Dormitory clearance granted for: ${studentName}`
+                : `Dormitory clearance rejected for: ${studentName}. Reason: ${reason || 'No reason specified'}`;
 
             await logger.log(req, actionLabel, student_id, logDetails, studentName);
 

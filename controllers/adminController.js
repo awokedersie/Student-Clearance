@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const logger = require('../utils/logger');
+const responseHandler = require('../utils/responseHandler');
 
 // Helper function to get the appropriate dashboard path
 function getDashboardPath(role) {
@@ -75,18 +76,13 @@ exports.login = async (req, res) => {
 
         console.log('🎉 Admin login successful for:', admin.name);
 
-        res.json({
-            success: true,
+        return responseHandler.success(res, {
             user: req.session.user,
             redirect: getDashboardPath(admin.role)
-        });
+        }, 'Login successful');
 
     } catch (error) {
-        console.error('💥 Admin login error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Login failed. Please try again.'
-        });
+        return responseHandler.error(res, 'Login failed. Please try again.', 500, error);
     }
 };
 
@@ -116,25 +112,53 @@ exports.getSystemDashboardData = async (req, res) => {
     try {
         const db = req.db;
 
-        const [studentCount] = await db.execute("SELECT COUNT(*) as total FROM student");
+        // Auto-cleanup: Delete orphan records and decommissioned departments (finance)
+        try {
+            await db.execute("DELETE FROM clearance_requests WHERE student_id NOT IN (SELECT student_id FROM student)");
+            await db.execute("DELETE FROM special_clearance_students WHERE student_id NOT IN (SELECT student_id FROM student)");
+            await db.execute("DELETE FROM clearance_requests WHERE target_department = 'finance'");
+        } catch (cleanupErr) {
+            console.warn('⚠️ Minor issue during dashboard auto-cleanup:', cleanupErr.message);
+        }
+
+        const [studentStats] = await db.execute("SELECT status, COUNT(*) as count FROM student GROUP BY status");
         const [adminCount] = await db.execute("SELECT COUNT(*) as total FROM admin");
 
-        let approvedCount = [{ total: 0 }], rejectedCount = [{ total: 0 }];
+        // Detailed clearance stats by department (excluding decommissioned ones)
+        const [deptStats] = await db.execute(`
+            SELECT target_department, status, COUNT(*) as count 
+            FROM clearance_requests 
+            WHERE target_department != 'finance'
+            GROUP BY target_department, status
+        `);
 
-        try {
-            [approvedCount] = await db.execute("SELECT COUNT(*) as total FROM final_clearance WHERE status = 'approved'");
-            [rejectedCount] = await db.execute("SELECT COUNT(*) as total FROM final_clearance WHERE status = 'rejected'");
-        } catch (e) { console.warn("Final clearance table probably missing or empty"); }
+        // Registrar status (Final Approval)
+        const [registrarStats] = await db.execute(`
+            SELECT status, COUNT(*) as count 
+            FROM clearance_requests 
+            WHERE target_department = 'registrar' 
+            GROUP BY status
+        `);
+
+        // Format student breakdown
+        const studentBreakdown = { active: 0, inactive: 0, total: 0 };
+        studentStats.forEach(s => {
+            if (s.status === 'active') studentBreakdown.active = parseInt(s.count);
+            else studentBreakdown.inactive = parseInt(s.count);
+            studentBreakdown.total += parseInt(s.count);
+        });
 
         const statistics = {
-            total_students: studentCount[0].total,
+            total_students: studentBreakdown.total,
+            active_students: studentBreakdown.active,
+            inactive_students: studentBreakdown.inactive,
             total_admins: adminCount[0].total,
-            approved_students: approvedCount[0].total,
-            rejected_students: rejectedCount[0].total,
-            active_requests: studentCount[0].total - approvedCount[0].total
+            approved_students: registrarStats.find(r => r.status === 'approved')?.count || 0,
+            rejected_students: registrarStats.find(r => r.status === 'rejected')?.count || 0,
+            pending_students: registrarStats.find(r => r.status === 'pending')?.count || 0,
+            department_stats: deptStats,
+            active_requests: studentBreakdown.total - (registrarStats.find(r => r.status === 'approved')?.count || 0)
         };
-
-        console.log('📊 System dashboard loaded for:', req.session.user.username);
 
         res.json({
             success: true,
@@ -204,7 +228,7 @@ exports.getClearanceSettingsData = async (req, res) => {
 
         // Stats calculation
         const [studentCount] = await db.execute("SELECT COUNT(*) as total FROM student");
-        const [finalizedCount] = await db.execute("SELECT COUNT(*) as total FROM final_clearance WHERE status = 'approved' AND academic_year = ?", [clearance_settings.academic_year]);
+        const [finalizedCount] = await db.execute("SELECT COUNT(*) as total FROM clearance_requests WHERE target_department = 'registrar' AND status = 'approved' AND academic_year = ?", [clearance_settings.academic_year]);
 
         const total_students = studentCount[0].total || 0;
         const submitted = finalizedCount[0].total || 0;
@@ -367,24 +391,57 @@ exports.getManageStudentsData = async (req, res) => {
     try {
         const db = req.db;
         const search = req.query.search || '';
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = (page - 1) * limit;
 
-        let query = "SELECT id, student_id, name, last_name, email, phone, department, year, semester, status, profile_picture FROM student";
+        let baseQuery = `
+            FROM student s
+            LEFT JOIN clearance_requests cr ON s.student_id = cr.student_id 
+                AND cr.target_department = 'registrar'
+                AND cr.academic_year = (SELECT academic_year FROM clearance_settings ORDER BY id DESC LIMIT 1)
+        `;
+
+        let whereClause = "";
         let params = [];
 
         if (search) {
-            query += " WHERE name ILIKE ? OR last_name ILIKE ? OR student_id ILIKE ? OR department ILIKE ?";
+            whereClause = " WHERE s.name ILIKE ? OR s.last_name ILIKE ? OR s.student_id ILIKE ? OR s.department ILIKE ?";
             const searchTerm = `%${search}%`;
             params = [searchTerm, searchTerm, searchTerm, searchTerm];
         }
 
-        query += " ORDER BY id DESC";
+        // Get total count for pagination
+        const countQuery = `SELECT COUNT(*) as total ${baseQuery} ${whereClause}`;
+        const [countResult] = await db.execute(countQuery, params);
+        const totalStudents = countResult[0].total || 0;
 
-        const [students] = await db.execute(query, params);
+        // Get paginated data
+        const dataQuery = `
+            SELECT s.*, 
+                   cr.status as clearance_status,
+                   cr.reject_reason as clearance_reject_reason
+            ${baseQuery}
+            ${whereClause}
+            ORDER BY s.id DESC
+            LIMIT ? OFFSET ?
+        `;
+
+        // Add pagination params
+        params.push(limit, offset);
+
+        const [students] = await db.execute(dataQuery, params);
 
         res.json({
             success: true,
             user: req.session.user,
             students: students,
+            pagination: {
+                total: parseInt(totalStudents),
+                page: page,
+                limit: limit,
+                totalPages: Math.ceil(totalStudents / limit)
+            },
             departments: [
                 'Information Technology', 'Computer Science', 'Software Engineering',
                 'Management', 'Economics', 'Accounting', 'Psychology'
@@ -412,7 +469,7 @@ exports.addAdmin = async (req, res) => {
             [name, last_name, username, hashedPassword, email, phone, role, department_name || null]
         );
 
-        await logger.log(req, 'ADD_ADMIN', username, `Role: ${role}, Dept: ${department_name || 'N/A'}`);
+        await logger.log(req, 'ADD_ADMIN', username, `Registered new staff member: ${name} ${last_name} (${username}) with role: ${role}`, `${name} ${last_name}`);
 
         res.json({ success: true, message: 'Admin added successfully' });
     } catch (error) {
@@ -440,7 +497,7 @@ exports.updateAdmin = async (req, res) => {
         params.push(id);
 
         await db.execute(query, params);
-        await logger.log(req, 'UPDATE_ADMIN', username, `Updated admin details for ${username}`);
+        await logger.log(req, 'UPDATE_ADMIN', username, `Updated staff details for: ${name} ${last_name} (${username}). New Role: ${role}`, `${name} ${last_name}`);
         res.json({ success: true, message: 'Admin updated successfully' });
     } catch (error) {
         console.error('💥 Update admin error:', error);
@@ -458,7 +515,7 @@ exports.deleteAdmin = async (req, res) => {
         }
 
         await db.execute("DELETE FROM admin WHERE id = ?", [id]);
-        await logger.log(req, 'DELETE_ADMIN', id, `Deleted admin with ID ${id}`);
+        await logger.log(req, 'DELETE_ADMIN', id, `Permanently deleted staff member with ID ${id}`, id);
         res.json({ success: true, message: 'Admin deleted successfully' });
     } catch (error) {
         console.error('💥 Delete admin error:', error);
@@ -515,7 +572,8 @@ exports.addStudent = async (req, res) => {
             [final_student_id, capitalizedName, capitalizedLastName, username, hashedPassword, email, phone, department, year, semester, profile_picture]
         );
 
-        await logger.log(req, 'ADD_STUDENT', final_student_id, `Registered new student`, `${capitalizedName} ${capitalizedLastName}`);
+        const fullName = `${capitalizedName} ${capitalizedLastName}`;
+        await logger.log(req, 'ADD_STUDENT', final_student_id, `Registered new student: ${fullName}`, fullName);
 
         res.json({ success: true, message: 'Student added successfully', student_id: final_student_id });
     } catch (error) {
@@ -557,7 +615,8 @@ exports.updateStudent = async (req, res) => {
         params.push(student_id);
 
         await db.execute(query, params);
-        await logger.log(req, 'UPDATE_STUDENT', student_id, `Updated student profile`, `${name} ${last_name}`);
+        const fullName = `${name} ${last_name}`;
+        await logger.log(req, 'UPDATE_STUDENT', student_id, `Updated student profile: ${fullName}`, fullName);
         res.json({ success: true, message: 'Student updated successfully' });
     } catch (error) {
         console.error('💥 Update student error:', error);
@@ -570,16 +629,55 @@ exports.deleteStudent = async (req, res) => {
         const db = req.db;
         const { studentId } = req.params;
 
-        // Fetch student name before deletion
-        const [students] = await db.execute("SELECT name, last_name FROM student WHERE student_id = ?", [studentId]);
-        const studentName = students.length > 0 ? `${students[0].name} ${students[0].last_name}` : null;
+        // 1. Fetch student details for logging and file cleanup before actual deletion
+        const [students] = await db.execute("SELECT name, last_name, profile_picture FROM student WHERE student_id = ?", [studentId]);
+        if (students.length === 0) {
+            return res.status(404).json({ success: false, message: 'Student record not found or already deleted.' });
+        }
 
+        const student = students[0];
+        const studentName = `${student.name} ${student.last_name}`;
+
+        console.log(`🗑️ Starting permanent deletion for student: ${studentName} (${studentId})`);
+
+        // 2. Delete related records from tables without auto-cascade
+        // clearance_requests has CASCADE in schema, but we do it manually to be 100% sure across any DB variation
+        await db.execute("DELETE FROM special_clearance_students WHERE student_id = ?", [studentId]);
+        await db.execute("DELETE FROM clearance_requests WHERE student_id = ?", [studentId]);
+
+        // 3. Delete the main student record
         await db.execute("DELETE FROM student WHERE student_id = ?", [studentId]);
-        await logger.log(req, 'DELETE_STUDENT', studentId, `Permanently deleted student record`, studentName);
-        res.json({ success: true, message: 'Student deleted successfully' });
+
+        // 4. File Cleanup: Remove profile picture if it exists
+        if (student.profile_picture) {
+            const fs = require('fs');
+            const path = require('path');
+            const photoPath = path.join(__dirname, '..', student.profile_picture);
+
+            try {
+                if (fs.existsSync(photoPath)) {
+                    fs.unlinkSync(photoPath);
+                    console.log(`✅ Deleted profile picture: ${student.profile_picture}`);
+                }
+            } catch (fsErr) {
+                console.warn(`⚠️ Could not delete profile picture file: ${fsErr.message}`);
+            }
+        }
+
+        // 5. Log the action in Audit Trail
+        await logger.log(req, 'DELETE_STUDENT', studentId, `Permanently removed student: ${studentName}`, studentName);
+
+        res.json({
+            success: true,
+            message: `Student ${studentName} and all associated data have been permanently erased.`
+        });
+
     } catch (error) {
-        console.error('💥 Delete student error:', error);
-        res.status(500).json({ success: false, message: 'Failed to delete student' });
+        console.error('💥 Critical Error during student deletion:', error);
+        res.status(500).json({
+            success: false,
+            message: 'A server error occurred while trying to erase the student record: ' + error.message
+        });
     }
 };
 
@@ -616,7 +714,30 @@ exports.bulkStudentActions = async (req, res) => {
 
         if (bulk_action === 'delete') {
             const placeholders = selected_students.map(() => '?').join(',');
+
+            // 1. Fetch all profile pictures for these students before deletion
+            const [students] = await db.execute(`SELECT profile_picture FROM student WHERE student_id IN (${placeholders})`, selected_students);
+
+            // 2. Delete from all related tables
+            await db.execute(`DELETE FROM special_clearance_students WHERE student_id IN (${placeholders})`, selected_students);
+            await db.execute(`DELETE FROM clearance_requests WHERE student_id IN (${placeholders})`, selected_students);
+
+            // 3. Delete from main student table
             await db.execute(`DELETE FROM student WHERE student_id IN (${placeholders})`, selected_students);
+
+            // 4. Bulk File Cleanup
+            const fs = require('fs');
+            const path = require('path');
+            students.forEach(student => {
+                if (student.profile_picture) {
+                    const photoPath = path.join(__dirname, '..', student.profile_picture);
+                    try {
+                        if (fs.existsSync(photoPath)) fs.unlinkSync(photoPath);
+                    } catch (e) { }
+                }
+            });
+
+            await logger.log(req, 'BULK_DELETE_STUDENTS', null, `Bulk deleted ${selected_students.length} students and their related data. Targets: ${selected_students.join(', ')}`);
         } else if (bulk_action === 'activate' || bulk_action === 'deactivate') {
             const newStatus = bulk_action === 'activate' ? 'active' : 'inactive';
             const placeholders = selected_students.map(() => '?').join(',');

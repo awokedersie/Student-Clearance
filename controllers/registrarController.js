@@ -12,7 +12,7 @@ async function sendClearanceDecisionEmail(studentEmail, studentName, decision, r
 
         if (decision === 'approved') {
             mailOptions = {
-                from: `"DBU Clearance System" <${process.env.EMAIL_USER || 'amanneby004@gmail.com'}>`,
+                from: `"DBU Clearance System" <${process.env.EMAIL_USER || 'no-reply@dbu.edu.et'}>`,
                 to: studentEmail,
                 subject: 'Final Clearance Approved - DBU Clearance System',
                 html: `
@@ -48,7 +48,7 @@ async function sendClearanceDecisionEmail(studentEmail, studentName, decision, r
             };
         } else {
             mailOptions = {
-                from: `"DBU Clearance System" <${process.env.EMAIL_USER || 'amanneby004@gmail.com'}>`,
+                from: `"DBU Clearance System" <${process.env.EMAIL_USER || 'no-reply@dbu.edu.et'}>`,
                 to: studentEmail,
                 subject: 'Final Clearance Rejected - DBU Clearance System',
                 html: `
@@ -108,18 +108,17 @@ exports.getDashboardData = async (req, res) => {
         const status_filter = req.query.status || 'all';
 
         console.log('📊 Fetching statistics...');
-        // Get comprehensive statistics for dashboard
+        // Get comprehensive statistics for dashboard from unified table
         const [statsRows] = await db.execute(`
             SELECT 
-                (SELECT COUNT(*) FROM academicstaff_clearance ac 
-                 INNER JOIN department_clearance dc ON ac.student_id = dc.student_id AND dc.status = 'approved'
-                 WHERE ac.academic_year = ?) as total,
-                (SELECT COUNT(*) FROM final_clearance WHERE status = 'approved' AND academic_year = ?) as approved,
-                (SELECT COUNT(*) FROM academicstaff_clearance ac 
-                 INNER JOIN department_clearance dc ON ac.student_id = dc.student_id AND dc.status = 'approved'
-                 LEFT JOIN final_clearance fc ON ac.student_id = fc.student_id 
-                 WHERE fc.status IS NULL AND ac.academic_year = ?) as pending,
-                (SELECT COUNT(*) FROM final_clearance WHERE status = 'rejected' AND academic_year = ?) as rejected
+                (SELECT COUNT(*) FROM clearance_requests ac 
+                 INNER JOIN clearance_requests dc ON ac.student_id = dc.student_id AND dc.target_department = 'department' AND dc.status = 'approved'
+                 WHERE ac.academic_year = ? AND ac.target_department = 'registrar') as total,
+                (SELECT COUNT(*) FROM clearance_requests WHERE target_department = 'registrar' AND status = 'approved' AND academic_year = ?) as approved,
+                (SELECT COUNT(*) FROM clearance_requests ac 
+                 INNER JOIN clearance_requests dc ON ac.student_id = dc.student_id AND dc.target_department = 'department' AND dc.status = 'approved'
+                 WHERE ac.status = 'pending' AND ac.academic_year = ? AND ac.target_department = 'registrar') as pending,
+                (SELECT COUNT(*) FROM clearance_requests WHERE target_department = 'registrar' AND status = 'rejected' AND academic_year = ?) as rejected
         `, [currentAcademicYear, currentAcademicYear, currentAcademicYear, currentAcademicYear]);
 
         const stats = statsRows[0] || { total: 0, approved: 0, pending: 0, rejected: 0 };
@@ -135,18 +134,17 @@ exports.getDashboardData = async (req, res) => {
         let query = `
             SELECT ac.*,
                    CONCAT(ac.name, ' ', ac.last_name) as student_name,
+                   ac.student_department as department,
                    ac.requested_at as updated_at,
-                   (SELECT status FROM library_clearance WHERE student_id = ac.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) as library_status,
-                   (SELECT status FROM cafeteria_clearance WHERE student_id = ac.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) as cafeteria_status,
-                   (SELECT status FROM dormitory_clearance WHERE student_id = ac.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) as dormitory_status,
-                   (SELECT status FROM department_clearance WHERE student_id = ac.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) as department_status,
-                   fc.status as final_status,
-                   fc.reject_reason as final_reject_reason,
-                   ac.reject_reason as academic_reject_reason
-            FROM academicstaff_clearance ac 
-            INNER JOIN department_clearance dc ON ac.student_id = dc.student_id AND dc.status = 'approved'
-            LEFT JOIN final_clearance fc ON ac.student_id = fc.student_id
-            WHERE ac.academic_year = ?
+                   (SELECT status FROM clearance_requests WHERE student_id = ac.student_id AND academic_year = ? AND target_department = 'library' ORDER BY id DESC LIMIT 1) as library_status,
+                   (SELECT status FROM clearance_requests WHERE student_id = ac.student_id AND academic_year = ? AND target_department = 'cafeteria' ORDER BY id DESC LIMIT 1) as cafeteria_status,
+                   (SELECT status FROM clearance_requests WHERE student_id = ac.student_id AND academic_year = ? AND target_department = 'dormitory' ORDER BY id DESC LIMIT 1) as dormitory_status,
+                   (SELECT status FROM clearance_requests WHERE student_id = ac.student_id AND academic_year = ? AND target_department = 'department' ORDER BY id DESC LIMIT 1) as department_status,
+                   ac.status as final_status,
+                   ac.reject_reason as final_reject_reason
+            FROM clearance_requests ac 
+            INNER JOIN clearance_requests dc ON ac.student_id = dc.student_id AND dc.target_department = 'department' AND dc.status = 'approved'
+            WHERE ac.academic_year = ? AND ac.target_department = 'registrar'
         `;
 
         let queryParams = [
@@ -156,34 +154,26 @@ exports.getDashboardData = async (req, res) => {
 
         // Apply search filter
         if (search) {
-            query += " AND (ac.name ILIKE ? OR ac.last_name ILIKE ? OR ac.student_id ILIKE ? OR ac.department ILIKE ?)";
+            query += " AND (ac.name ILIKE ? OR ac.last_name ILIKE ? OR ac.student_id ILIKE ? OR ac.student_department ILIKE ?)";
             const searchTerm = `%${search}%`;
             queryParams.push(searchTerm, searchTerm, searchTerm, searchTerm);
         }
 
         // Apply status filter
         if (status_filter === 'pending') {
-            query += " AND fc.status IS NULL AND ac.status = 'pending'";
+            query += " AND ac.status = 'pending'";
         } else if (status_filter === 'approved') {
-            query += " AND fc.status = 'approved'";
+            query += " AND ac.status = 'approved'";
         } else if (status_filter === 'rejected') {
-            query += " AND fc.status = 'rejected'";
+            query += " AND ac.status = 'rejected'";
         }
 
-        query += " ORDER BY " +
-            "(CASE " +
-            "    WHEN fc.status IS NULL AND " +
-            "         (SELECT status FROM department_clearance WHERE student_id = ac.student_id AND academic_year = '" + currentAcademicYear + "' ORDER BY id DESC LIMIT 1) = 'approved' " +
-            "    THEN 1 " +
-            "    ELSE 2 " +
-            "END) ASC, " +
-            "ac.student_id ASC";
+        query += ` ORDER BY (CASE WHEN ac.status = 'pending' THEN 1 ELSE 2 END) ASC, ac.student_id ASC`;
 
         const [allStudents] = await db.execute(query, queryParams);
 
         // Map lock status
         const students = allStudents.map(s => {
-            const isFinalized = s.final_status === 'approved'; // We could define a lock later, but for now allow Registrar to toggle
             return {
                 ...s,
                 is_locked: false, // Registrar can toggle statuses to fix mistakes
@@ -195,11 +185,9 @@ exports.getDashboardData = async (req, res) => {
 
         // Get approved final clearances for history - CURRENT ACADEMIC YEAR ONLY
         const [historyRows] = await db.execute(`
-            SELECT fc.*, ac.department, ac.reject_reason as academic_reject_reason 
-            FROM final_clearance fc 
-            LEFT JOIN academicstaff_clearance ac ON fc.student_id = ac.student_id 
-            WHERE fc.academic_year = ?
-            ORDER BY fc.date_sent DESC 
+            SELECT * FROM clearance_requests
+            WHERE target_department = 'registrar' AND status = 'approved' AND academic_year = ?
+            ORDER BY requested_at DESC 
             LIMIT 50
         `, [currentAcademicYear]);
 
@@ -260,7 +248,6 @@ exports.handleAction = async (req, res) => {
         }
 
         // Determine if this is an approval or rejection
-        // Handle both Boolean and string 'true'/'false' from frontend
         const isApprove = bulk_action ? (bulk_action === 'approve') : (approve === 'true' || approve === true || !!approve);
         const finalStatus = isApprove ? 'approved' : 'rejected';
         const finalRejectReason = bulk_action ? bulk_reject_reason : reject_reason;
@@ -268,7 +255,7 @@ exports.handleAction = async (req, res) => {
         console.log(`📝 Processing ${studentsToProcess.length} students. Action: ${finalStatus}`);
 
         for (const sid of studentsToProcess) {
-            // Get student details for email and final_clearance record
+            // Get student details for email
             const [students] = await db.execute("SELECT * FROM student WHERE student_id = ?", [sid]);
             if (students.length === 0) {
                 console.warn(`⚠️ Student not found: ${sid}`);
@@ -276,51 +263,27 @@ exports.handleAction = async (req, res) => {
             }
             const student = students[0];
 
-
-
-            // 1. Update academicstaff_clearance status
+            // 1. Update clearance_requests status for registrar
+            const notificationMsg = isApprove ? 'Your final clearance has been approved. You can now download your certificate.' : `Your final clearance has been rejected. Reason: ${finalRejectReason || 'Please contact office'}`;
             await db.execute(
-                "UPDATE academicstaff_clearance SET status = ?, reject_reason = ?, approved_at = CASE WHEN ? = 'approved' THEN CURRENT_TIMESTAMP ELSE approved_at END, approved_by = ? WHERE student_id = ? AND academic_year = ?",
-                [finalStatus, isApprove ? null : finalRejectReason, finalStatus, req.session.user.full_name || 'Registrar', sid, currentAcademicYear]
+                "UPDATE clearance_requests SET status = ?, reject_reason = ?, notification_message = ?, is_read = FALSE, approved_at = CASE WHEN ? = 'approved' THEN CURRENT_TIMESTAMP ELSE approved_at END, approved_by = ? WHERE student_id = ? AND academic_year = ? AND target_department = 'registrar'",
+                [finalStatus, isApprove ? null : finalRejectReason, notificationMsg, finalStatus, req.session.user.full_name || 'Registrar', sid, currentAcademicYear]
             );
 
             // Audit Log
             const actionLabel = finalStatus === 'approved' ? 'APPROVE_STUDENT' : 'REJECT_STUDENT';
             const logDetails = finalStatus === 'approved'
-                ? 'Final registrar seal provided. Digital certificate generated.'
-                : `Final registrar seal rejected. Reason: ${finalRejectReason || 'No reason specified'}`;
+                ? `Final registrar seal provided for: ${student.name} ${student.last_name}. Digital certificate generated.`
+                : `Final registrar seal rejected for: ${student.name} ${student.last_name}. Reason: ${finalRejectReason || 'No reason specified'}`;
 
             await logger.log(req, actionLabel, sid, logDetails, `${student.name} ${student.last_name}`);
 
-            // 2. Create/Update final_clearance record (Notification)
-            const [existing] = await db.execute(
-                "SELECT id FROM final_clearance WHERE student_id = ? AND academic_year = ?",
-                [sid, currentAcademicYear]
-            );
-
-            if (existing.length > 0) {
-                await db.execute(
-                    "UPDATE final_clearance SET status = ?, reject_reason = ?, date_sent = NOW(), is_read = FALSE, year = ? WHERE id = ?",
-                    [finalStatus, isApprove ? null : finalRejectReason, student.year, existing[0].id]
-                );
-            } else {
-                const defaultMsg = isApprove ? 'Your final clearance has been approved. You can now download your certificate.' : `Your final clearance has been rejected. Reason: ${finalRejectReason || 'Please contact office'}`;
-                await db.execute(
-                    "INSERT INTO final_clearance (student_id, name, last_name, status, reject_reason, academic_year, is_read, message, year) VALUES (?, ?, ?, ?, ?, ?, FALSE, ?, ?)",
-                    [sid, student.name, student.last_name, finalStatus, isApprove ? null : finalRejectReason, currentAcademicYear, defaultMsg, student.year]
-                );
-            }
-
-            // 3. Update student status in the main student table
-            // Approved means they are cleared and no longer 'active' students for the current session
+            // 2. Update student status in the main student table
             const studentStatus = isApprove ? 'inactive' : 'active';
             await db.execute("UPDATE student SET status = ? WHERE student_id = ?", [studentStatus, sid]);
 
-            // 4. Send Email Notification
-            const emailSent = await sendClearanceDecisionEmail(student.email, student.name, finalStatus, finalRejectReason);
-            if (emailSent) {
-                await db.execute("UPDATE final_clearance SET email_sent = TRUE WHERE student_id = ? AND academic_year = ?", [sid, currentAcademicYear]);
-            }
+            // 3. Send Email Notification
+            await sendClearanceDecisionEmail(student.email, student.name, finalStatus, finalRejectReason);
 
             processedCount++;
         }

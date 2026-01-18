@@ -30,7 +30,7 @@ const requireSystemAdmin = (req, res, next) => {
 };
 
 const requireLibraryAdmin = (req, res, next) => {
-    if (!req.session.user || (req.session.user.role !== 'library_admin' && req.session.user.role !== 'super_admin')) {
+    if (!req.session.user || (req.session.user.role !== 'library_admin' && req.session.user.role !== 'system_admin' && req.session.user.role !== 'super_admin')) {
         if (req.xhr || req.headers.accept?.includes('application/json')) {
             return res.status(401).json({ success: false, message: 'Unauthorized - Library Admin access required' });
         }

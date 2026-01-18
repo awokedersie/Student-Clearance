@@ -171,7 +171,7 @@ const ClearanceRequest: React.FC = () => {
                         </div>
                         <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Submission Unavailable</h3>
                         <p className="text-gray-500 font-medium max-w-sm mx-auto mt-2 italic">
-                            You cannot submit a new request at this time. This may be because the system is closed, your account is inactive, or you have already obtained clearance.
+                            {data?.canSubmitMessage || "You cannot submit a new request at this time. Please contact the administration."}
                         </p>
                     </div>
                 )}

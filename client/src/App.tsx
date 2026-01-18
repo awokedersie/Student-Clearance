@@ -12,9 +12,7 @@ import ManageStudents from './components/ManageStudents';
 import ManageAdmins from './components/ManageAdmins';
 import ClearanceSettings from './components/ClearanceSettings';
 import DepartmentDashboard from './components/DepartmentDashboard';
-import About from './components/About';
 import ForgotPassword from './components/ForgotPassword';
-import Contact from './components/Contact';
 import AuditLogs from './components/AuditLogs';
 
 function App() {
@@ -43,8 +41,6 @@ function App() {
         <Route path="/admin/registrar/dashboard" element={<DepartmentDashboard />} />
         <Route path="/admin/protector/dashboard" element={<DepartmentDashboard />} />
         <Route path="/admin/change-password" element={<ChangePassword />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
 
         {/* Redirects */}
         <Route path="/" element={<Navigate to="/login" replace />} />

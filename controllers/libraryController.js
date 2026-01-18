@@ -21,8 +21,8 @@ exports.getDashboardData = async (req, res) => {
                 SUM(CASE WHEN lc.status = 'pending' THEN 1 ELSE 0 END) as pending,
                 SUM(CASE WHEN lc.status = 'approved' THEN 1 ELSE 0 END) as approved,
                 SUM(CASE WHEN lc.status = 'rejected' THEN 1 ELSE 0 END) as rejected
-            FROM library_clearance lc
-            WHERE lc.academic_year = ?
+            FROM clearance_requests lc
+            WHERE lc.academic_year = ? AND lc.target_department = 'library'
         `, [currentAcademicYear]);
 
         const stats = statsRows[0] || { total: 0, pending: 0, approved: 0, rejected: 0 };
@@ -35,14 +35,15 @@ exports.getDashboardData = async (req, res) => {
         let mainQuery = `
             SELECT 
                 lc.*, 
+                lc.student_department as department,
                 CONCAT(lc.name, ' ', lc.last_name) as student_name,
                 lc.requested_at as updated_at,
-                (SELECT status FROM cafeteria_clearance WHERE student_id = lc.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) as cafeteria_status,
-                (SELECT status FROM dormitory_clearance WHERE student_id = lc.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) as dormitory_status,
-                (SELECT status FROM department_clearance WHERE student_id = lc.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) as department_status,
-                (SELECT status FROM academicstaff_clearance WHERE student_id = lc.student_id AND academic_year = ? ORDER BY id DESC LIMIT 1) as registrar_status
-            FROM library_clearance lc 
-            WHERE lc.academic_year = ?
+                (SELECT status FROM clearance_requests WHERE student_id = lc.student_id AND academic_year = ? AND target_department = 'cafeteria' ORDER BY id DESC LIMIT 1) as cafeteria_status,
+                (SELECT status FROM clearance_requests WHERE student_id = lc.student_id AND academic_year = ? AND target_department = 'dormitory' ORDER BY id DESC LIMIT 1) as dormitory_status,
+                (SELECT status FROM clearance_requests WHERE student_id = lc.student_id AND academic_year = ? AND target_department = 'department' ORDER BY id DESC LIMIT 1) as department_status,
+                (SELECT status FROM clearance_requests WHERE student_id = lc.student_id AND academic_year = ? AND target_department = 'registrar' ORDER BY id DESC LIMIT 1) as registrar_status
+            FROM clearance_requests lc 
+            WHERE lc.academic_year = ? AND lc.target_department = 'library'
         `;
 
         let queryParams = [currentAcademicYear, currentAcademicYear, currentAcademicYear, currentAcademicYear, currentAcademicYear];
@@ -136,7 +137,7 @@ exports.handleAction = async (req, res) => {
         let processedCount = 0;
         for (const id of requestIds) {
             // Check if student is locked by subsequent stages or already approved by library
-            const [clearanceRows] = await db.execute("SELECT student_id, academic_year, name, last_name, status FROM library_clearance WHERE id = ?", [id]);
+            const [clearanceRows] = await db.execute("SELECT student_id, academic_year, name, last_name, status FROM clearance_requests WHERE id = ? AND target_department = 'library'", [id]);
             if (clearanceRows.length === 0) continue;
 
             const { student_id, academic_year, name, last_name } = clearanceRows[0];
@@ -145,10 +146,10 @@ exports.handleAction = async (req, res) => {
             if (true) { // Logic to check locks
                 const [lockedBy] = await db.execute(`
                     SELECT 
-                        (SELECT COUNT(*) FROM cafeteria_clearance WHERE student_id = ? AND academic_year = ? AND status = 'approved') as cafeteria_approved,
-                        (SELECT COUNT(*) FROM dormitory_clearance WHERE student_id = ? AND academic_year = ? AND status = 'approved') as dormitory_approved,
-                        (SELECT COUNT(*) FROM department_clearance WHERE student_id = ? AND academic_year = ? AND status = 'approved') as department_approved,
-                        (SELECT COUNT(*) FROM academicstaff_clearance WHERE student_id = ? AND academic_year = ? AND status = 'approved') as registrar_approved
+                        (SELECT COUNT(*) FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = 'cafeteria' AND status = 'approved') as cafeteria_approved,
+                        (SELECT COUNT(*) FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = 'dormitory' AND status = 'approved') as dormitory_approved,
+                        (SELECT COUNT(*) FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = 'department' AND status = 'approved') as department_approved,
+                        (SELECT COUNT(*) FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = 'registrar' AND status = 'approved') as registrar_approved
                 `, [student_id, academic_year, student_id, academic_year, student_id, academic_year, student_id, academic_year]);
 
                 const locks = lockedBy[0];
@@ -159,15 +160,15 @@ exports.handleAction = async (req, res) => {
             }
 
             await db.execute(
-                "UPDATE library_clearance SET status = ?, reject_reason = ?, approved_at = CASE WHEN ? = 'approved' THEN CURRENT_TIMESTAMP ELSE approved_at END, rejected_at = CASE WHEN ? = 'rejected' THEN CURRENT_TIMESTAMP ELSE rejected_at END, approved_by = ? WHERE id = ?",
+                "UPDATE clearance_requests SET status = ?, reject_reason = ?, approved_at = CASE WHEN ? = 'approved' THEN CURRENT_TIMESTAMP ELSE approved_at END, rejected_at = CASE WHEN ? = 'rejected' THEN CURRENT_TIMESTAMP ELSE rejected_at END, approved_by = ? WHERE id = ?",
                 [status, reason || null, status, status, req.session.user.full_name, id]
             );
 
             // Audit Log
             const actionLabel = status === 'approved' ? 'APPROVE_STUDENT' : 'REJECT_STUDENT';
             const logDetails = status === 'approved'
-                ? 'Library clearance granted'
-                : `Library clearance rejected. Reason: ${reason || 'No reason specified'}`;
+                ? `Library clearance granted for: ${studentName}`
+                : `Library clearance rejected for: ${studentName}. Reason: ${reason || 'No reason specified'}`;
 
             await logger.log(req, actionLabel, student_id, logDetails, studentName);
 

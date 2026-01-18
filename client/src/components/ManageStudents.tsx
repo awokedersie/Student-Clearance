@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import AdminLayout from './AdminLayout';
+import ConfirmModal from './ConfirmModal';
 
 interface Student {
     student_id: string;
@@ -15,17 +17,53 @@ interface Student {
     semester: string;
     profile_picture?: string;
     phone: string;
+    clearance_status?: string;
+}
+
+interface Pagination {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
+interface ApiResponse {
+    success: boolean;
+    user: any;
+    students: Student[];
+    departments: string[];
+    pagination?: Pagination;
+    edit_student?: Student;
+    message?: string;
 }
 
 const ManageStudents: React.FC = () => {
-    const [data, setData] = useState<any>(null);
+    const [students, setStudents] = useState<Student[]>([]);
+    const [departments, setDepartments] = useState<string[]>([]);
+    const [currentUser, setCurrentUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+
+    // Pagination & Search State
     const [search, setSearch] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [limit, setLimit] = useState(10);
+
     const [showForm, setShowForm] = useState(false);
     const [editStudent, setEditStudent] = useState<Student | null>(null);
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
+
+    // Confirmation Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        isDangerous: false,
+        onConfirm: () => { },
+    });
+
     const [formData, setFormData] = useState({
         student_id: '',
         name: '',
@@ -41,15 +79,30 @@ const ManageStudents: React.FC = () => {
     });
     const [profilePicture, setProfilePicture] = useState<File | null>(null);
 
-    const fetchData = async (searchTerm = '') => {
+    const fetchData = async (page = 1, searchTerm = '') => {
         setLoading(true);
         try {
-            const response = await axios.get(`/admin/system/manage-students/data?search=${searchTerm}`);
+            const response = await axios.get<ApiResponse>(`/admin/system/manage-students/data`, {
+                params: {
+                    search: searchTerm,
+                    page: page,
+                    limit: limit
+                }
+            });
+
             if (response.data.success) {
-                setData(response.data);
+                setStudents(response.data.students || []);
+                setDepartments(response.data.departments || []);
+                setCurrentUser(response.data.user);
+
+                if (response.data.pagination) {
+                    setTotalPages(response.data.pagination.totalPages);
+                    setCurrentPage(response.data.pagination.page);
+                }
+
                 if (response.data.edit_student) {
                     setEditStudent(response.data.edit_student);
-                    setFormData(response.data.edit_student);
+                    setFormData({ ...formData, ...response.data.edit_student, password: '' });
                     setShowForm(true);
                 }
             } else {
@@ -68,57 +121,99 @@ const ManageStudents: React.FC = () => {
     const location = useLocation();
 
     useEffect(() => {
-        fetchData();
-
-        // Auto-open form if quick-action is triggered from dashboard
+        fetchData(currentPage, search);
         const params = new URLSearchParams(location.search);
         if (params.get('action') === 'add') {
             setShowForm(true);
         }
-    }, [location.search]);
+    }, [location.search]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        fetchData(currentPage, search);
+    }, [currentPage, limit]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        fetchData(search);
+        setCurrentPage(1);
+        fetchData(1, search);
     };
 
-    const handleToggleStatus = async (studentId: string) => {
-        if (!confirm('Toggle status for this student?')) return;
+    // --- Action Handlers ---
+
+    const executeToggleStatus = async (studentId: string) => {
         try {
             await axios.get(`/admin/system/manage-students/toggle-status/${encodeURIComponent(studentId)}`);
-            fetchData(search);
+            toast.success('Student status updated');
+            fetchData(currentPage, search);
         } catch (error) {
-            alert('Failed to update status');
+            toast.error('Failed to update status');
+        } finally {
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
     };
 
-    const handleDelete = async (studentId: string) => {
-        if (!confirm('DELETE this student? This cannot be undone.')) return;
+    const handleToggleStatus = (studentId: string) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Change Status?',
+            message: 'Are you sure you want to toggle the active status for this student?',
+            isDangerous: false,
+            onConfirm: () => executeToggleStatus(studentId)
+        });
+    };
+
+    const executeDelete = async (studentId: string) => {
         try {
             const response = await axios.get(`/admin/system/manage-students/delete/${encodeURIComponent(studentId)}`);
             if (response.data.success) {
-                fetchData(search);
+                toast.success('Student deleted successfully');
+                fetchData(currentPage, search);
             }
         } catch (error) {
-            alert('Failed to delete student');
+            toast.error('Failed to delete student');
+        } finally {
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
     };
 
-    const handleBulkAction = async (action: string) => {
-        if (selectedStudents.length === 0) return;
-        if (!confirm(`Apply ${action} to ${selectedStudents.length} students?`)) return;
+    const handleDelete = (studentId: string) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Student',
+            message: 'This action cannot be undone. Are you surely you want to permanently delete this student?',
+            isDangerous: true,
+            onConfirm: () => executeDelete(studentId)
+        });
+    };
 
+    const executeBulkAction = async (action: string) => {
         try {
             await axios.post('/admin/system/manage-students/bulk-actions', {
                 bulk_action: action,
                 selected_students: selectedStudents
             });
+            toast.success(`Bulk ${action} applied successfully`);
             setSelectedStudents([]);
-            fetchData(search);
+            fetchData(currentPage, search);
         } catch (error) {
-            alert('Bulk action failed');
+            toast.error('Bulk action failed');
+        } finally {
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
     };
+
+    const handleBulkAction = (action: string) => {
+        if (selectedStudents.length === 0) return;
+        setConfirmModal({
+            isOpen: true,
+            title: 'Confirm Bulk Action',
+            message: `Are you sure you want to apply "${action}" to ${selectedStudents.length} selected students?`,
+            isDangerous: action === 'delete',
+            onConfirm: () => executeBulkAction(action)
+        });
+    };
+
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -136,7 +231,7 @@ const ManageStudents: React.FC = () => {
         try {
             const response = await axios.post(url, data);
             if (response.data.success) {
-                alert(response.data.message || 'Student saved successfully');
+                toast.success(response.data.message || 'Student saved successfully');
                 setShowForm(false);
                 setEditStudent(null);
                 setProfilePicture(null);
@@ -145,10 +240,10 @@ const ManageStudents: React.FC = () => {
                     department: '', phone: '', year: '', semester: '',
                     password: '', status: 'active'
                 });
-                fetchData(search);
+                fetchData(currentPage, search);
             }
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Submission failed');
+            toast.error(error.response?.data?.message || 'Submission failed');
         } finally {
             setSubmitting(false);
         }
@@ -157,22 +252,21 @@ const ManageStudents: React.FC = () => {
     const handleEditClick = (student: Student) => {
         setEditStudent(student);
         setFormData({
+            ...formData,
             ...student,
-            password: '', // Don't fill password
+            password: '',
         });
         setShowForm(true);
     };
 
-    if (loading && !data) return <div className="p-8 text-center text-gray-500 font-medium">Loading Students...</div>;
-
-    const { students = [], departments = [], user } = data || {};
+    if (loading && students.length === 0) return <div className="p-8 text-center text-gray-500 font-medium animate-pulse">Loading Students...</div>;
 
     return (
-        <AdminLayout user={user}>
+        <AdminLayout user={currentUser}>
             <div className="p-8 space-y-6">
                 {/* Actions Header */}
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-4 w-full md:w-auto">
+                <div className="flex flex-col xl:flex-row justify-between items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-4 w-full xl:w-auto flex-wrap">
                         <button
                             onClick={() => {
                                 setEditStudent(null);
@@ -206,13 +300,13 @@ const ManageStudents: React.FC = () => {
                         )}
                     </div>
 
-                    <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-auto">
+                    <form onSubmit={handleSearch} className="flex gap-2 w-full xl:w-auto">
                         <input
                             type="text"
                             placeholder="Search by ID or Name..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="flex-1 md:w-64 bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                            className="flex-1 w-full xl:w-64 bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                         />
                         <button type="submit" className="bg-gray-100 hover:bg-gray-200 text-gray-700 p-3 rounded-2xl transition-colors">
                             🔍
@@ -230,7 +324,7 @@ const ManageStudents: React.FC = () => {
                                         <input
                                             type="checkbox"
                                             onChange={(e) => {
-                                                if (e.target.checked) setSelectedStudents(students.map((s: any) => s.student_id));
+                                                if (e.target.checked) setSelectedStudents(students.map(s => s.student_id));
                                                 else setSelectedStudents([]);
                                             }}
                                             checked={selectedStudents.length === students.length && students.length > 0}
@@ -252,7 +346,7 @@ const ManageStudents: React.FC = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    students.map((student: Student) => (
+                                    students.map((student) => (
                                         <tr key={student.student_id} className="hover:bg-gray-50/50 transition-colors group">
                                             <td className="p-5 text-center">
                                                 <input
@@ -269,7 +363,7 @@ const ManageStudents: React.FC = () => {
                                                 <div className="flex items-center gap-4">
                                                     <div className="relative">
                                                         {student.profile_picture ? (
-                                                            <img src={`/${student.profile_picture}`} className="w-12 h-12 rounded-2xl object-cover ring-2 ring-gray-100" />
+                                                            <img src={`/${student.profile_picture}`} alt={student.name} className="w-12 h-12 rounded-2xl object-cover ring-2 ring-gray-100" />
                                                         ) : (
                                                             <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-400 font-bold border-2 border-dashed border-indigo-100 italic">
                                                                 {student.name[0]}
@@ -285,7 +379,10 @@ const ManageStudents: React.FC = () => {
                                             </td>
                                             <td className="p-5">
                                                 <p className="text-sm font-bold text-gray-700">{student.department}</p>
-                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-black opacity-60">Year {student.year} • Sem {student.semester}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-black opacity-60">Year {student.year} • Sem {student.semester}</p>
+
+                                                </div>
                                             </td>
                                             <td className="p-5">
                                                 <button
@@ -300,8 +397,8 @@ const ManageStudents: React.FC = () => {
                                             </td>
                                             <td className="p-5 text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    <button onClick={() => handleEditClick(student)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors">✏️</button>
-                                                    <button onClick={() => handleDelete(student.student_id)} className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors">🗑️</button>
+                                                    <button onClick={() => handleEditClick(student)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors shadow-sm" title="Edit Student">✏️</button>
+                                                    <button onClick={() => handleDelete(student.student_id)} className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors shadow-sm" title="Delete Student">🗑️</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -310,6 +407,50 @@ const ManageStudents: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination Controls */}
+                    {students.length > 0 && (
+                        <div className="p-6 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-50/50">
+                            <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
+                                <span>Rows per page:</span>
+                                <select
+                                    value={limit}
+                                    onChange={(e) => {
+                                        setLimit(Number(e.target.value));
+                                        setCurrentPage(1); // Reset to first page
+                                    }}
+                                    className="bg-white border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    <option value={10}>10</option>
+                                    <option value={20}>20</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                </select>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <button
+                                    disabled={currentPage === 1}
+                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                    className="p-2 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                >
+                                    ◀ Prev
+                                </button>
+
+                                <span className="text-sm font-bold text-gray-700">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+
+                                <button
+                                    disabled={currentPage >= totalPages}
+                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                    className="p-2 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                >
+                                    Next ▶
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Add/Edit Modal */}
@@ -455,6 +596,16 @@ const ManageStudents: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Confirm Modal */}
+                <ConfirmModal
+                    isOpen={confirmModal.isOpen}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    isDangerous={confirmModal.isDangerous}
+                    onConfirm={confirmModal.onConfirm}
+                    onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                />
             </div>
         </AdminLayout>
     );

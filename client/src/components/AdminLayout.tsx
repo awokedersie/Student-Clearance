@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { Toaster } from 'react-hot-toast';
 
 interface AdminLayoutProps {
     children: ReactNode;
@@ -129,6 +130,36 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
                     {children}
                 </div>
             </main>
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    className: 'font-bold text-sm',
+                    style: {
+                        background: '#333',
+                        color: '#fff',
+                        borderRadius: '16px',
+                        padding: '16px',
+                    },
+                    success: {
+                        style: {
+                            background: '#10B981',
+                        },
+                        iconTheme: {
+                            primary: 'white',
+                            secondary: '#10B981',
+                        },
+                    },
+                    error: {
+                        style: {
+                            background: '#EF4444',
+                        },
+                        iconTheme: {
+                            primary: 'white',
+                            secondary: '#EF4444',
+                        },
+                    },
+                }}
+            />
         </div>
     );
 };

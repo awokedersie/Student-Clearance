@@ -7,33 +7,62 @@
 // ==================== DEPENDENCIES & CONFIGURATION ====================
 require('dotenv').config(); // Load environment variables first
 
+const validateEnv = require('./config/validateEnv');
+validateEnv(); // Validate variables before anything else
+
 const express = require('express');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session); // PostgreSQL session store
 const bodyParser = require('body-parser');
 const path = require('path');
-
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const responseHandler = require('./utils/responseHandler');
 
 const app = express();
+
+// ==================== SECURITY MIDDLEWARE ====================
+// 1. Helmet for security headers
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP for now to ensure React assets load
+    crossOriginEmbedderPolicy: false
+}));
+
+// 2. Rate Limiting (Prevent Brute Force)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: { success: false, message: 'Too many requests, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Apply rate limiter to auth routes
+app.use('/login', limiter);
+app.use('/admin/login', limiter);
 
 // ==================== MIDDLEWARE SETUP ====================
 app.set('trust proxy', 1); // Trust first proxy (Render)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Session configuration
+// ==================== DATABASE & SESSION STORE ====================
+const pool = require('./config/db');
+
+// Session configuration with PostgreSQL store
 app.use(session({
+    store: new pgSession({
+        pool: pool,
+        tableName: 'session' // pgSession will create this if it doesn't exist
+    }),
     secret: process.env.SESSION_SECRET || 'dbu-secret-key',
     resave: false,
     saveUninitialized: false,
     cookie: {
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }));
-
-// ==================== DATABASE CONFIGURATION ====================
-// ==================== DATABASE CONFIGURATION ====================
-const pool = require('./config/db');
 
 // Database middleware
 app.use((req, res, next) => {

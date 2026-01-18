@@ -60,7 +60,19 @@ const ClearanceSettings: React.FC = () => {
         }
     };
 
-    if (loading && !data) return <div className="p-8 text-center text-gray-500 font-medium">Loading Settings...</div>;
+    if (loading && !data) return <div className="p-8 text-center text-gray-500 font-medium italic animate-pulse">🔒 Initialising Clearance Engine...</div>;
+    if (!data) return (
+        <div className="min-h-[400px] flex items-center justify-center">
+            <div className="text-center p-12 bg-red-50 rounded-[40px] border border-red-100 max-w-md">
+                <div className="text-5xl mb-6">⚠️</div>
+                <h3 className="text-xl font-black text-red-900 mb-2">Configuration Error</h3>
+                <p className="text-red-700 font-medium mb-6">We couldn't retrieve the system settings. This may be due to a temporary database disconnection.</p>
+                <button onClick={() => fetchData()} className="bg-red-600 text-white font-black px-8 py-3 rounded-2xl hover:bg-red-700 transition-all">
+                    Try Again
+                </button>
+            </div>
+        </div>
+    );
 
     const { clearance_settings, system_status, status_class, status_icon, user } = data;
 
