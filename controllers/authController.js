@@ -37,6 +37,8 @@ async function sendVerificationCode(studentEmail, studentName, verificationCode)
                     <p style='color: #e74c3c; font-weight: bold;'>
                         ⚠️ If you didn't request this reset, please ignore this email.
                     </p>
+
+                    <p>You can login here: <a href='https://dbu-clearance-system.onrender.com/login'>DBU Clearance Login</a></p>
                     
                     <hr style='border: none; border-top: 1px solid #ddd;'>
                     <p style='color: #7f8c8d; font-size: 12px;'>

@@ -28,11 +28,10 @@ async function sendClearanceDecisionEmail(studentEmail, studentName, decision, r
                             </p>
                         </div>
                         
-                        <a href="https://dbu-clearance-system.onrender.com/login" style="display: inline-block; background-color: #2ecc71; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px 0; font-weight: bold;">Login to Download Certificate</a>
-                        
                         <p><strong>Important Notes:</strong></p>
                         <ul>
                             <li>You can download your clearance certificate from the student portal</li>
+                            <li><a href='https://dbu-clearance-system.onrender.com/login'>Click here to login and download certificate</a></li>
                             <li>You have completed all clearance requirements</li>
                             <li>This completes your clearance process at DBU</li>
                         </ul>
@@ -45,7 +44,7 @@ async function sendClearanceDecisionEmail(studentEmail, studentName, decision, r
                         </p>
                     </div>
                 `,
-                text: `Final Clearance Approved: Dear ${studentName}, your final clearance has been APPROVED. Please login to download your certificate: https://dbu-clearance-system.onrender.com/login`
+                text: `Final Clearance Approved: Dear ${studentName}, your final clearance has been APPROVED. Your student status has been updated to inactive. This completes your clearance process at DBU.`
             };
         } else {
             mailOptions = {
@@ -65,14 +64,13 @@ async function sendClearanceDecisionEmail(studentEmail, studentName, decision, r
                             </p>
                         </div>
                         
-                        <a href="https://dbu-clearance-system.onrender.com/login" style="display: inline-block; background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px 0; font-weight: bold;">Login to Student Portal</a>
-
                         <p><strong>Next Steps:</strong></p>
                         <ul>
                             <li>Please address the issue mentioned above</li>
                             <li>Your student status remains <strong>active</strong></li>
                             <li>You may reapply for clearance after resolving the issue</li>
                             <li>Contact the relevant department for assistance</li>
+                            <li><a href='https://dbu-clearance-system.onrender.com/login'>Login to check your status</a></li>
                         </ul>
                         
                         <p>If you need clarification, please visit the Registrar Office.</p>
@@ -83,7 +81,7 @@ async function sendClearanceDecisionEmail(studentEmail, studentName, decision, r
                         </p>
                     </div>
                 `,
-                text: `Final Clearance Rejected: Dear ${studentName}, your final clearance has been REJECTED. Reason: ${reason}. Please login to address the issue: https://dbu-clearance-system.onrender.com/login`
+                text: `Final Clearance Rejected: Dear ${studentName}, your final clearance has been REJECTED. Reason: ${reason}. Please address the issue and reapply. Your student status remains active.`
             };
         }
 

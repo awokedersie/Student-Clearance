@@ -78,7 +78,10 @@ const Login: React.FC = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-indigo-200 uppercase tracking-widest opacity-70 px-1">Password</label>
+                                <div className="flex justify-between items-center px-1">
+                                    <label className="text-xs font-black text-indigo-200 uppercase tracking-widest opacity-70">Password</label>
+                                    <Link to="/forgot-password" title="Recover Access" className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors">Lost?</Link>
+                                </div>
                                 <div className="relative group/input">
                                     <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xl opacity-40 group-focus-within/input:opacity-100 transition-opacity">🔑</span>
                                     <input
@@ -89,9 +92,6 @@ const Login: React.FC = () => {
                                         className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-5 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-white/20"
                                         required
                                     />
-                                </div>
-                                <div className="text-right px-1">
-                                    <Link to="/forgot-password" className="text-xs font-bold text-indigo-400 hover:text-white transition-colors">Forgot Password?</Link>
                                 </div>
                             </div>
 
