@@ -575,6 +575,41 @@ exports.addStudent = async (req, res) => {
         const fullName = `${capitalizedName} ${capitalizedLastName}`;
         await logger.log(req, 'ADD_STUDENT', final_student_id, `Registered new student: ${fullName}`, fullName);
 
+        // Send Welcome Email
+        try {
+            const transporter = require('../config/email');
+            await transporter.sendMail({
+                from: `"DBU Clearance System" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: 'Welcome to DBU Clearance System - Account Created',
+                html: `
+                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                        <h2 style='color: #2c3e50;'>Welcome to DBU!</h2>
+                        <p>Dear <strong>${fullName}</strong>,</p>
+                        <p>Your student account for the DBU Clearance System has been successfully created.</p>
+                        
+                        <div style='background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 5px solid #3498db; margin: 20px 0;'>
+                            <p style='margin: 0;'><strong>Username:</strong> ${username}</p>
+                            <p style='margin: 10px 0 0 0;'><strong>Temporary Password:</strong> ${password || '12345678'}</p>
+                        </div>
+                        
+                        <p>Please log in and <strong style='color: #e74c3c;'>change your password immediately</strong>.</p>
+                        
+                        <a href="https://dbu.free.nf/clearance-management/" style="display: inline-block; background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">Login Now</a>
+                        
+                        <hr style='border: none; border-top: 1px solid #ddd; margin-top: 30px;'>
+                        <p style='color: #7f8c8d; font-size: 12px;'>
+                            This is an automated message. Please do not reply to this email.
+                        </p>
+                    </div>
+                `
+            });
+            console.log(`📧 Welcome email sent to ${email}`);
+        } catch (emailErr) {
+            console.error('❌ Failed to send welcome email:', emailErr);
+            // Don't fail the request if email fails, just log it
+        }
+
         res.json({ success: true, message: 'Student added successfully', student_id: final_student_id });
     } catch (error) {
         console.error('💥 Add student error:', error);
