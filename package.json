@@ -26,7 +26,6 @@
     "helmet": "^8.1.0",
     "image-size": "^2.0.2",
     "jspdf": "^4.0.0",
-    "jspdf-autotable": "^5.0.7",
     "multer": "^2.0.2",
     "node-pg-migrate": "^8.0.4",
     "nodemailer": "^7.0.10",
