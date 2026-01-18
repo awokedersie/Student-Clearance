@@ -41,8 +41,8 @@ async function validateEmail(email) {
             validateMx: true,
             validateTypo: false,
             validateDisposable: true,
-            validateSMTP: true,
-            timeout: 5000 // 5 second timeout
+            validateSMTP: false, // SMTP checks often fail in cloud environments due to port blocking
+            timeout: 5000
         });
 
         console.log('📧 Email validation result:', {
