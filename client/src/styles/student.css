@@ -1,0 +1,20 @@
+@import "./base.css";
+
+/* Student Portal Specific Styles */
+.student-portal {
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Custom scrollbars for student portal */
+.student-portal ::-webkit-scrollbar {
+    width: 6px;
+}
+
+.student-portal ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.student-portal ::-webkit-scrollbar-thumb {
+    background: #4f46e5;
+    border-radius: 10px;
+}

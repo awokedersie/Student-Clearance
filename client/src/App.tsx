@@ -1,26 +1,26 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './components/Login';
-import StudentDashboard from './components/StudentDashboard';
-import StudentProfile from './components/StudentProfile';
-import ClearanceRequest from './components/ClearanceRequest';
-import ClearanceStatus from './components/ClearanceStatus';
-import ChangePassword from './components/ChangePassword';
-import Notifications from './components/Notifications';
-import AdminLogin from './components/AdminLogin';
-import SystemDashboard from './components/SystemDashboard';
-import ManageStudents from './components/ManageStudents';
-import ManageAdmins from './components/ManageAdmins';
-import ClearanceSettings from './components/ClearanceSettings';
-import DepartmentDashboard from './components/DepartmentDashboard';
-import ForgotPassword from './components/ForgotPassword';
-import AuditLogs from './components/AuditLogs';
+import StudentLogin from './components/student/StudentLogin';
+import StudentDashboard from './components/student/StudentDashboard';
+import StudentProfile from './components/student/StudentProfile';
+import ClearanceRequest from './components/student/ClearanceRequest';
+import ClearanceStatus from './components/student/ClearanceStatus';
+import ChangePassword from './components/common/ChangePassword';
+import Notifications from './components/student/Notifications';
+import AdminLogin from './components/admin/AdminLogin';
+import SystemDashboard from './components/admin/SystemDashboard';
+import ManageStudents from './components/admin/ManageStudents';
+import ManageAdmins from './components/admin/ManageAdmins';
+import ClearanceSettings from './components/admin/ClearanceSettings';
+import DepartmentDashboard from './components/admin/DepartmentDashboard';
+import ForgotPassword from './components/common/ForgotPassword';
+import AuditLogs from './components/admin/AuditLogs';
 
 function App() {
   return (
     <Router>
       <Routes>
         {/* Student Routes */}
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<StudentLogin />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/student/dashboard" element={<StudentDashboard />} />
         <Route path="/student/profile" element={<StudentProfile />} />

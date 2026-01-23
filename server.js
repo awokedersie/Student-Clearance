@@ -78,15 +78,15 @@ app.use((req, res, next) => {
 
 // ==================== ROUTE IMPORTS ====================
 const routes = {
-    auth: require('./routes/auth'),
-    student: require('./routes/student'),
-    admin: require('./routes/admin'),
-    cafeteria: require('./routes/cafeteria'),
-    dormitory: require('./routes/dormitory'),
-    department: require('./routes/department'),
-    registrar: require('./routes/registrar'),
-    protector: require('./routes/protector'),
-    library: require('./routes/library')
+    auth: require('./routes/student/auth'),
+    student: require('./routes/student/student'),
+    system: require('./routes/admin/system'),
+    cafeteria: require('./routes/admin/cafeteria'),
+    dormitory: require('./routes/admin/dormitory'),
+    department: require('./routes/admin/department'),
+    registrar: require('./routes/admin/registrar'),
+    protector: require('./routes/admin/protector'),
+    library: require('./routes/admin/library')
 };
 
 // ==================== ROUTE REGISTRATION ====================
@@ -94,7 +94,7 @@ const routes = {
 // We mount these BEFORE static/SPA handlers so they can handle specialized paths
 app.use('/', routes.auth);
 app.use('/student', routes.student);
-app.use('/admin', routes.admin);
+app.use('/admin', routes.system);
 app.use('/admin', routes.cafeteria);
 app.use('/admin', routes.dormitory);
 app.use('/admin', routes.department);

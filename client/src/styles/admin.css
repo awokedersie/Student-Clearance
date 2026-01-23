@@ -1,0 +1,20 @@
+@import "./base.css";
+
+/* Admin Panel Specific Styles */
+.admin-panel {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Custom scrollbars for admin panel */
+.admin-panel ::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-panel ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.admin-panel ::-webkit-scrollbar-thumb {
+    background: #1e1b4b;
+    border-radius: 10px;
+}
