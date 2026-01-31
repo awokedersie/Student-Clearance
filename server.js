@@ -107,6 +107,22 @@ app.use(express.static(path.join(__dirname, 'client/dist')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static('public'));
 
+// ==================== DEBUG TOOLS ====================
+app.get('/debug/test-email', async (req, res) => {
+    try {
+        const transporter = require('./config/email');
+        const info = await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: process.env.EMAIL_USER, // Send to self
+            subject: 'Render SMTP Test',
+            text: 'If you see this, email is working on Render!'
+        });
+        res.json({ success: true, messageId: info.messageId });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // ==================== SPA NAVIGATION HANDLER ====================
 // Handle student/admin page refreshes by serving index.html for non-API GET requests
 app.get('*', (req, res) => {
