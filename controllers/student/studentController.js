@@ -584,22 +584,19 @@ exports.getClearanceRequestData = async (req, res) => {
                 const end = new Date(clearanceSettings.end_date);
 
                 if (clearanceSettings.is_active) {
-                    // System is marked active by admin
-                    systemActive = true;
-
-                    // Calculate time remaining based on dates
                     if (now >= start && now <= end) {
+                        systemActive = true;
                         daysRemaining = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
                     } else if (now > end) {
-                        // Expired but still active flag? Admin probably wants it open
-                        daysRemaining = 0;
-                    } else {
-                        // Future start date but active flag? Show countdown but allow?
-                        // Usually active flag = GO.
-                        daysRemaining = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
+                        systemActive = false;
+                        systemMessage = "Clearance period has expired.";
+                    } else if (now < start) {
+                        systemActive = false;
+                        systemMessage = "Clearance period has not started yet.";
+                        daysRemaining = Math.max(0, Math.ceil((start - now) / (1000 * 60 * 60 * 24)));
                     }
                 } else {
-                    // Not active flag - determine reason
+                    systemActive = false;
                     if (now < start) {
                         systemMessage = "Clearance period has not started yet.";
                     } else if (now > end) {
@@ -663,12 +660,34 @@ exports.submitClearanceRequest = async (req, res) => {
         const db = req.db;
         const studentId = req.session.user.student_id;
         const { reason, request_type, submit_all_clearance } = req.body;
-        const [settingsRows] = await db.execute("SELECT academic_year FROM clearance_settings ORDER BY id DESC LIMIT 1");
-        const academicYear = settingsRows[0]?.academic_year || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
-
         if (!reason) {
             return res.status(400).json({ success: false, message: 'Reason is required' });
         }
+
+        // VALIDATION: Check if clearance period is still active
+        const [settingsRows] = await db.execute("SELECT * FROM clearance_settings ORDER BY id DESC LIMIT 1");
+        if (settingsRows.length === 0) {
+            return res.status(400).json({ success: false, message: 'Clearance system is not configured.' });
+        }
+
+        const settings = settingsRows[0];
+        const now = new Date();
+        const start = new Date(settings.start_date);
+        const end = new Date(settings.end_date);
+
+        if (!settings.is_active) {
+            return res.status(400).json({ success: false, message: 'The clearance system is currently inactive.' });
+        }
+
+        if (now < start) {
+            return res.status(400).json({ success: false, message: 'The clearance period has not started yet.' });
+        }
+
+        if (now > end) {
+            return res.status(400).json({ success: false, message: 'The clearance period has expired. You can no longer submit requests.' });
+        }
+
+        const academicYear = settings.academic_year || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
 
         const [students] = await db.execute('SELECT * FROM student WHERE student_id = ?', [studentId]);
         if (students.length === 0) return res.status(404).json({ success: false, message: 'Student not found' });
