@@ -97,7 +97,7 @@ const Login: React.FC = () => {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="submit-button !w-auto !mt-0 px-10 min-w-[170px]"
+                                    className="submit-button !w-auto !mt-0 px-10 min-w-[150px]"
                                 >
                                     {loading ? (
                                         <>
@@ -106,7 +106,7 @@ const Login: React.FC = () => {
                                         </>
                                     ) : (
                                         <>
-                                            <span>Enter Portal</span>
+                                            <span>Login</span>
                                             <span className="transition-transform group-hover:translate-x-1">⟶</span>
                                         </>
                                     )}
@@ -114,9 +114,9 @@ const Login: React.FC = () => {
 
                                 <Link
                                     to="/forgot-password"
-                                    className="text-[10px] font-bold text-indigo-400/80 hover:text-white transition-all uppercase tracking-widest border-b border-transparent hover:border-indigo-400/40 pb-1"
+                                    className="text-[11px] font-bold text-indigo-400/80 hover:text-white transition-all tracking-widest border-b border-transparent hover:border-indigo-400/40 pb-1 whitespace-nowrap"
                                 >
-                                    Forgot password?
+                                    forgot password
                                 </Link>
                             </div>
                         </form>
