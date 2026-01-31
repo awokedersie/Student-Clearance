@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+:root {
+  --primary-indigo: #4f46e5;
+  --primary-blue: #2563eb;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
