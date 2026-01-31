@@ -188,4 +188,14 @@ process.on('SIGTERM', async () => {
     }
 });
 
+// ==================== GLOBAL ERROR CATCHERS ====================
+// Prevent the app from crashing on Render if an async operation fails
+process.on('uncaughtException', (err) => {
+    console.error('🔥 UNCAUGHT EXCEPTION:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('🔥 UNHANDLED REJECTION at:', promise, 'reason:', reason);
+});
+
 module.exports = app; // For testing purposes
