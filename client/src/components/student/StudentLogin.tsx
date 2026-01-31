@@ -94,17 +94,10 @@ const Login: React.FC = () => {
                             </div>
 
                             <div className="flex items-center justify-between gap-4 pt-2">
-                                <Link
-                                    to="/forgot-password"
-                                    className="text-[10px] font-bold text-indigo-400/80 hover:text-white transition-all uppercase tracking-widest border-b border-transparent hover:border-indigo-400/40 pb-1"
-                                >
-                                    Forgot password?
-                                </Link>
-
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="submit-button !w-auto !mt-0 px-10 min-w-[160px]"
+                                    className="submit-button !w-auto !mt-0 px-10 min-w-[170px]"
                                 >
                                     {loading ? (
                                         <>
@@ -118,6 +111,13 @@ const Login: React.FC = () => {
                                         </>
                                     )}
                                 </button>
+
+                                <Link
+                                    to="/forgot-password"
+                                    className="text-[10px] font-bold text-indigo-400/80 hover:text-white transition-all uppercase tracking-widest border-b border-transparent hover:border-indigo-400/40 pb-1"
+                                >
+                                    Forgot password?
+                                </Link>
                             </div>
                         </form>
 
