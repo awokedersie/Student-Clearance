@@ -88,7 +88,10 @@ const ClearanceRequest: React.FC = () => {
                     {data?.systemActive && (
                         <div className="text-right hidden sm:block">
                             <p className="text-[10px] uppercase font-black opacity-60">Time Remaining</p>
-                            <p className="text-lg font-black">{data?.daysRemaining}d {data?.hoursRemaining}h</p>
+                            <p className="text-lg font-black">
+                                {data?.daysRemaining > 0 ? `${data?.daysRemaining}d ` : ''}
+                                {data?.hoursRemaining}h {data?.minutesRemaining}m
+                            </p>
                         </div>
                     )}
                 </div>

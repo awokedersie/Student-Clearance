@@ -109,6 +109,7 @@ exports.getDashboardData = async (req, res) => {
         // Get system status and remaining days
         let systemStatus = 'Inactive';
         let daysRemaining = 0;
+        let hoursRemaining = 0;
 
         try {
             const [settings] = await db.execute(
@@ -124,8 +125,9 @@ exports.getDashboardData = async (req, res) => {
 
                 if (setting.is_active && now >= start && now <= end) {
                     systemStatus = 'Clearance Open';
-                    const diffTime = Math.abs(end.getTime() - now.getTime());
-                    daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    const diffTime = end.getTime() - now.getTime();
+                    daysRemaining = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    hoursRemaining = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 } else if (!setting.is_active) {
                     systemStatus = 'System Inactive';
                 } else if (now > end) {
@@ -146,6 +148,7 @@ exports.getDashboardData = async (req, res) => {
             },
             systemStatus,
             daysRemaining,
+            hoursRemaining: hoursRemaining || 0,
             academicYear: academicYear,
             title: 'Student Dashboard'
         });
@@ -561,6 +564,8 @@ exports.getClearanceRequestData = async (req, res) => {
         let clearanceSettings = null;
         let hasCurrentClearance = false;
         let daysRemaining = 0;
+        let hoursRemaining = 0;
+        let minutesRemaining = 0;
         let dbAcademicYear = null;
 
         try {
@@ -586,14 +591,19 @@ exports.getClearanceRequestData = async (req, res) => {
                 if (clearanceSettings.is_active) {
                     if (now >= start && now <= end) {
                         systemActive = true;
-                        daysRemaining = Math.max(0, Math.ceil((end - now) / (1000 * 60 * 60 * 24)));
+                        const diffMs = end - now;
+                        daysRemaining = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                        hoursRemaining = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        minutesRemaining = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
                     } else if (now > end) {
                         systemActive = false;
                         systemMessage = "Clearance period has expired.";
                     } else if (now < start) {
                         systemActive = false;
                         systemMessage = "Clearance period has not started yet.";
-                        daysRemaining = Math.max(0, Math.ceil((start - now) / (1000 * 60 * 60 * 24)));
+                        const diffMs = start - now;
+                        daysRemaining = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                        hoursRemaining = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     }
                 } else {
                     systemActive = false;
@@ -643,6 +653,8 @@ exports.getClearanceRequestData = async (req, res) => {
             systemActive,
             systemMessage,
             daysRemaining,
+            hoursRemaining: hoursRemaining || 0,
+            minutesRemaining: minutesRemaining || 0,
             currentAcademicYear: academicYear,
             isStudentActive,
             hasCurrentClearance,

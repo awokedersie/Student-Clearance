@@ -21,6 +21,7 @@ const StudentDashboard: React.FC = () => {
     const [academicYear, setAcademicYear] = useState<string>('2023 - 2024');
     const [systemStatus, setSystemStatus] = useState<string>('Loading...');
     const [daysRemaining, setDaysRemaining] = useState<number>(0);
+    const [hoursRemaining, setHoursRemaining] = useState<number>(0);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -32,6 +33,7 @@ const StudentDashboard: React.FC = () => {
                     setUser(response.data.user);
                     setSystemStatus(response.data.systemStatus || 'Inactive');
                     setDaysRemaining(response.data.daysRemaining || 0);
+                    setHoursRemaining(response.data.hoursRemaining || 0);
                     if (response.data.academicYear) {
                         setAcademicYear(response.data.academicYear.replace('-', ' - '));
                     }
@@ -198,7 +200,9 @@ const StudentDashboard: React.FC = () => {
                                 <div>
                                     <p className="sidebar-stat-label">Time until Close</p>
                                     <p className="sidebar-stat-value">
-                                        {daysRemaining > 0 ? `${daysRemaining} Days Remaining` : 'Closing Soon'}
+                                        {daysRemaining > 0 || hoursRemaining > 0
+                                            ? `${daysRemaining}d ${hoursRemaining}h Remaining`
+                                            : 'Closing Soon'}
                                     </p>
                                 </div>
                             </div>
