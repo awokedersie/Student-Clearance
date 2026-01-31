@@ -192,13 +192,15 @@ exports.handleForgotPassword = async (req, res) => {
         const { name, email } = req.body;
         const db = req.db;
 
-        console.log('🔐 Forgot password attempt for:', { name, email });
+        console.log(`🔍 Searching for student: Name="${name}", Email="${email}"`);
 
-        // Find student by name and email
+        // Find student by name and email (Case-Insensitive for PostgreSQL)
         const [students] = await db.execute(
-            'SELECT id, name, email FROM student WHERE name = ? AND email = ?',
+            'SELECT id, name, email FROM student WHERE name ILIKE ? AND email ILIKE ?',
             [name, email]
         );
+
+        console.log(`📊 Search result: ${students.length} students found`);
 
         if (students.length > 0) {
             const user = students[0];
