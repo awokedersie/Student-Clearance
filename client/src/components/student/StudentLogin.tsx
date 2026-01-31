@@ -81,7 +81,7 @@ const Login: React.FC = () => {
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center px-1">
                                     <label className="form-label">Password</label>
-                                    <Link to="/forgot-password" title="Recover Access" className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors">Lost?</Link>
+                                    <Link to="/forgot-password" title="Recover Access" className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors">Forgot password?</Link>
                                 </div>
                                 <div className="input-wrapper">
                                     <span className="input-icon">🔑</span>
