@@ -91,28 +91,34 @@ const Login: React.FC = () => {
                                         required
                                     />
                                 </div>
-                                <div className="flex justify-end px-1">
-                                    <Link to="/forgot-password" title="Recover Access" className="text-[10px] font-bold text-indigo-400/80 hover:text-indigo-300 transition-colors uppercase tracking-widest">Forgot password?</Link>
-                                </div>
                             </div>
 
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="submit-button group"
-                            >
-                                {loading ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                        <span>Authenticating...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span>Enter Portal</span>
-                                        <span className="transition-transform group-hover:translate-x-1">⟶</span>
-                                    </>
-                                )}
-                            </button>
+                            <div className="flex items-center justify-between gap-4 pt-2">
+                                <Link
+                                    to="/forgot-password"
+                                    className="text-[10px] font-bold text-indigo-400/80 hover:text-white transition-all uppercase tracking-widest border-b border-transparent hover:border-indigo-400/40 pb-1"
+                                >
+                                    Forgot password?
+                                </Link>
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="submit-button !w-auto !mt-0 px-10 min-w-[160px]"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            <span>...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>Enter Portal</span>
+                                            <span className="transition-transform group-hover:translate-x-1">⟶</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </form>
 
                         <div className="mt-8 pt-8 border-t border-white/5 text-center">
