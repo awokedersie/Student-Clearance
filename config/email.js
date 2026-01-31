@@ -1,33 +1,41 @@
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// 📧 Create SMTP Transporter
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Port 465 uses SSL/TLS
-    auth: {
-        user: (process.env.EMAIL_USER || '').trim(),
-        pass: (process.env.EMAIL_PASS || '').trim()
-    },
-    // Aggressive timeouts for cloud networks
-    connectionTimeout: 60000, // 1 minute
-    greetingTimeout: 60000,
-    socketTimeout: 60000,
-    logger: true,
-    debug: true
-});
+let transporter;
 
-// 🔍 Startup Verification with expanded logging
-console.log('📬 Initializing Email System...');
-console.log(`📬 EMAIL_USER detected: ${process.env.EMAIL_USER ? 'YES (Length: ' + process.env.EMAIL_USER.trim().length + ')' : 'NO'}`);
-console.log(`📬 EMAIL_PASS detected: ${process.env.EMAIL_PASS ? 'YES (Length: ' + process.env.EMAIL_PASS.trim().length + ')' : 'NO'}`);
+if (process.env.RESEND_API_KEY) {
+    console.log('📬 Using Resend API for Production Email');
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
-transporter.verify((error, success) => {
-    if (error) {
-        console.error('❌ SMTP INITIALIZATION FAILED:', error.message);
-    } else {
-        console.log('✅ SMTP CONNECTION ESTABLISHED SUCCESSFULLY');
-    }
-});
+    // Create a compatible wrapper for Resend so we don't have to change other files
+    transporter = {
+        sendMail: async (options) => {
+            try {
+                const { data, error } = await resend.emails.send({
+                    from: 'DBU Clearance <onboarding@resend.dev>', // Free tier default
+                    to: options.to,
+                    subject: options.subject,
+                    html: options.html,
+                    text: options.text
+                });
+                if (error) throw error;
+                return { messageId: data.id };
+            } catch (err) {
+                console.error('❌ Resend API Error:', err);
+                throw err;
+            }
+        },
+        verify: (callback) => callback(null, true)
+    };
+} else {
+    console.log('📬 Using Gmail SMTP for Local Development');
+    transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: (process.env.EMAIL_USER || '').trim(),
+            pass: (process.env.EMAIL_PASS || '').trim()
+        }
+    });
+}
 
 module.exports = transporter;
