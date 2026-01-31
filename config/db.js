@@ -1,14 +1,19 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || '9700',
-    database: process.env.DB_NAME || 'clearance',
-    port: process.env.DB_PORT || 5434,
-    ssl: process.env.DB_HOST !== 'localhost' ? { rejectUnauthorized: false } : false
-};
+const dbConfig = process.env.DATABASE_URL
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+    }
+    : {
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || '9700',
+        database: process.env.DB_NAME || 'clearance',
+        port: process.env.DB_PORT || 5434,
+        ssl: process.env.DB_HOST !== 'localhost' ? { rejectUnauthorized: false } : false
+    };
 
 const pool = new Pool(dbConfig);
 
