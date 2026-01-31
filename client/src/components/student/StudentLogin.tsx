@@ -79,10 +79,7 @@ const Login: React.FC = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <div className="flex justify-between items-center px-1">
-                                    <label className="form-label">Password</label>
-                                    <Link to="/forgot-password" title="Recover Access" className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors">Forgot password?</Link>
-                                </div>
+                                <label className="form-label">Password</label>
                                 <div className="input-wrapper">
                                     <span className="input-icon">🔑</span>
                                     <input
@@ -93,6 +90,9 @@ const Login: React.FC = () => {
                                         className="input-field"
                                         required
                                     />
+                                </div>
+                                <div className="flex justify-end px-1">
+                                    <Link to="/forgot-password" title="Recover Access" className="text-[10px] font-bold text-indigo-400/80 hover:text-indigo-300 transition-colors uppercase tracking-widest">Forgot password?</Link>
                                 </div>
                             </div>
 
