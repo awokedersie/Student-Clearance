@@ -133,6 +133,8 @@ app.get('*', (req, res) => {
         !req.xhr &&
         !req.path.includes('.') &&
         !req.path.includes('/logout') &&
+        !req.path.includes('/debug') &&
+        !req.path.includes('/forgot-password') &&
         !req.path.includes('/download-certificate')) {
         return res.sendFile(path.join(__dirname, 'client/dist/index.html'));
     }
