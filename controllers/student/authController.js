@@ -5,14 +5,10 @@ const responseHandler = require('../../utils/responseHandler');
 // Function to send verification code email
 async function sendVerificationCode(studentEmail, studentName, verificationCode) {
     try {
-        // Check if email credentials are configured
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-            console.error('❌ Email credentials not configured! EMAIL_USER or EMAIL_PASS missing in environment variables');
-            return false;
+            console.error('❌ Email credentials missing');
+            return { success: false, error: 'Email configuration missing on server' };
         }
-
-        console.log(`📧 Attempting to send email to: ${studentEmail}`);
-        console.log(`📧 Using email account: ${process.env.EMAIL_USER}`);
 
         const mailOptions = {
             from: `"DBU Clearance System" <${process.env.EMAIL_USER}>`,
@@ -23,39 +19,24 @@ async function sendVerificationCode(studentEmail, studentName, verificationCode)
                     <h2 style='color: #2c3e50;'>Password Reset Request</h2>
                     <p>Dear <strong>${studentName}</strong>,</p>
                     <p>You have requested to reset your password for the DBU Clearance System.</p>
-                    
                     <div style='background: #f8f9fa; padding: 20px; border-radius: 8px; border: 2px dashed #2c3e50; text-align: center; margin: 20px 0;'>
                         <h3 style='margin: 0; color: #2c3e50;'>Your Verification Code:</h3>
                         <div style='font-size: 32px; font-weight: bold; color: #e74c3c; letter-spacing: 5px; margin: 15px 0;'>
                             ${verificationCode}
                         </div>
-                        <p style='color: #7f8c8d; font-size: 14px; margin: 0;'>
-                            This code will expire in 10 minutes
-                        </p>
+                        <p style='color: #7f8c8d; font-size: 14px; margin: 0;'>This code will expire in 10 minutes</p>
                     </div>
-                    
-                    <p style='color: #e74c3c; font-weight: bold;'>
-                        ⚠️ If you didn't request this reset, please ignore this email.
-                    </p>
-
-                    <p>You can login here: <a href='https://dbu-clearance-system.onrender.com/login'>DBU Clearance Login</a></p>
-                    
-                    <hr style='border: none; border-top: 1px solid #ddd;'>
-                    <p style='color: #7f8c8d; font-size: 12px;'>
-                        This is an automated message. Please do not reply to this email.
-                    </p>
                 </div>
             `,
-            text: `Password Reset Verification Code: ${verificationCode}. This code will expire in 10 minutes. If you didn't request this reset, please ignore this email.`
+            text: `Password Reset Verification Code: ${verificationCode}`
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Verification code email sent successfully:', info.messageId);
-        return true;
+        console.log('✅ Email sent:', info.messageId);
+        return { success: true };
     } catch (error) {
-        console.error('❌ Email sending failed with error:', error.message);
-        console.error('❌ Full error details:', error);
-        return false;
+        console.error('❌ Nodemailer Error:', error.message);
+        return { success: false, error: error.message };
     }
 }
 
@@ -234,9 +215,9 @@ exports.handleForgotPassword = async (req, res) => {
             console.log('🔑 Generated verification code:', verificationCode);
 
             // Send verification code via email
-            const emailSent = await sendVerificationCode(email, user.name, verificationCode);
+            const emailResult = await sendVerificationCode(email, user.name, verificationCode);
 
-            if (emailSent) {
+            if (emailResult.success) {
                 console.log('✅ Verification code sent successfully');
                 return res.json({
                     success: true,
@@ -245,7 +226,7 @@ exports.handleForgotPassword = async (req, res) => {
             } else {
                 return res.status(500).json({
                     success: false,
-                    message: 'Failed to send verification code. Please try again.'
+                    message: 'Failed to send verification code. ' + emailResult.error
                 });
             }
         } else {
