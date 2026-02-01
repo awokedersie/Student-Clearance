@@ -6,16 +6,72 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/login': 'http://localhost:3000',
-      '/student': 'http://localhost:3000',
-      '/admin': 'http://localhost:3000',
-      '/registrar': 'http://localhost:3000',
-      '/protector': 'http://localhost:3000',
+      '/login': {
+        target: 'http://localhost:3000',
+        bypass: (req, res, options) => {
+          if (req.headers.accept?.includes('text/html')) {
+            return req.url;
+          }
+        }
+      },
+      '/student': {
+        target: 'http://localhost:3000',
+        bypass: (req, res, options) => {
+          if (req.headers.accept?.includes('text/html')) {
+            return req.url;
+          }
+        }
+      },
+      '/admin': {
+        target: 'http://localhost:3000',
+        bypass: (req, res, options) => {
+          if (req.headers.accept?.includes('text/html')) {
+            return req.url;
+          }
+        }
+      },
+      '/registrar': {
+        target: 'http://localhost:3000',
+        bypass: (req, res, options) => {
+          if (req.headers.accept?.includes('text/html')) {
+            return req.url;
+          }
+        }
+      },
+      '/protector': {
+        target: 'http://localhost:3000',
+        bypass: (req, res, options) => {
+          if (req.headers.accept?.includes('text/html')) {
+            return req.url;
+          }
+        }
+      },
       '/uploads': 'http://localhost:3000',
       '/logout': 'http://localhost:3000',
-      '/forgot-password': 'http://localhost:3000',
-      '/verify-code': 'http://localhost:3000',
-      '/reset-password': 'http://localhost:3000',
+      '/forgot-password': {
+        target: 'http://localhost:3000',
+        bypass: (req, res, options) => {
+          if (req.headers.accept?.includes('text/html')) {
+            return req.url;
+          }
+        }
+      },
+      '/verify-code': {
+        target: 'http://localhost:3000',
+        bypass: (req, res, options) => {
+          if (req.headers.accept?.includes('text/html')) {
+            return req.url;
+          }
+        }
+      },
+      '/reset-password': {
+        target: 'http://localhost:3000',
+        bypass: (req, res, options) => {
+          if (req.headers.accept?.includes('text/html')) {
+            return req.url;
+          }
+        }
+      },
     }
   }
 })

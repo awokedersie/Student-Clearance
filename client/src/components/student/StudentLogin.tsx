@@ -40,22 +40,22 @@ const Login: React.FC = () => {
             <div className="bg-decorative-2"></div>
 
             <div className="login-content">
-                {/* Logo/Identity Area */}
-                <div className="text-center mb-10">
-                    <div className="logo-container">
-                        🎓
-                    </div>
-                    <h1 className="login-title">
-                        STUDENT <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">PORTAL</span>
-                    </h1>
-                    <p className="login-subtitle">Debre Berhan University</p>
-                </div>
-
                 {/* Login Container */}
                 <div className="login-card">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
 
                     <div className="relative z-10">
+                        {/* Logo/Identity Area - Now Inside Container */}
+                        <div className="text-center mb-10">
+                            <div className="logo-container">
+                                🎓
+                            </div>
+                            <h1 className="login-title">
+                                STUDENT <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">PORTAL</span>
+                            </h1>
+                            <p className="login-subtitle">Debre Berhan University</p>
+                        </div>
+
                         {error && (
                             <div className="error-message">
                                 ⚠️ {error}

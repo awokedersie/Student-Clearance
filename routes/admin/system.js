@@ -33,8 +33,8 @@ router.get('/system/manage-admins/delete/:id', requireSystemAdmin, systemControl
 router.get('/system/manage-students/data', requireSystemAdmin, systemController.getManageStudentsData);
 router.post('/system/manage-students/add', requireSystemAdmin, studentController.upload.single('profile_picture'), systemController.addStudent);
 router.post('/system/manage-students/update', requireSystemAdmin, studentController.upload.single('profile_picture'), systemController.updateStudent);
-router.get('/system/manage-students/delete/:studentId', requireSystemAdmin, systemController.deleteStudent);
-router.get('/system/manage-students/toggle-status/:studentId', requireSystemAdmin, systemController.toggleStudentStatus);
+router.post('/system/manage-students/delete', requireSystemAdmin, systemController.deleteStudent);
+router.post('/system/manage-students/toggle-status', requireSystemAdmin, systemController.toggleStudentStatus);
 router.post('/system/manage-students/bulk-actions', requireSystemAdmin, systemController.bulkStudentActions);
 
 // Audit Logs (Accessible by System Admin & Registrar)

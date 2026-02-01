@@ -142,7 +142,7 @@ const ManageStudents: React.FC = () => {
 
     const executeToggleStatus = async (studentId: string) => {
         try {
-            await axios.get(`/admin/system/manage-students/toggle-status/${encodeURIComponent(studentId)}`);
+            await axios.post(`/admin/system/manage-students/toggle-status`, { studentId });
             toast.success('Student status updated');
             fetchData(currentPage, search);
         } catch (error) {
@@ -164,7 +164,7 @@ const ManageStudents: React.FC = () => {
 
     const executeDelete = async (studentId: string) => {
         try {
-            const response = await axios.get(`/admin/system/manage-students/delete/${encodeURIComponent(studentId)}`);
+            const response = await axios.post(`/admin/system/manage-students/delete`, { studentId });
             if (response.data.success) {
                 toast.success('Student deleted successfully');
                 fetchData(currentPage, search);

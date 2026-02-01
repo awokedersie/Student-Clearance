@@ -627,7 +627,11 @@ exports.updateStudent = async (req, res) => {
 exports.deleteStudent = async (req, res) => {
     try {
         const db = req.db;
-        const { studentId } = req.params;
+        const { studentId } = req.body;
+
+        if (!studentId) {
+            return res.status(400).json({ success: false, message: 'Student ID is required' });
+        }
 
         // 1. Fetch student details for logging and file cleanup before actual deletion
         const [students] = await db.execute("SELECT name, last_name, profile_picture FROM student WHERE student_id = ?", [studentId]);
@@ -641,8 +645,17 @@ exports.deleteStudent = async (req, res) => {
         console.log(`🗑️ Starting permanent deletion for student: ${studentName} (${studentId})`);
 
         // 2. Delete related records from tables without auto-cascade
-        // clearance_requests has CASCADE in schema, but we do it manually to be 100% sure across any DB variation
 
+        // Try deleting from exam_schedule if it exists (safely)
+        try {
+            await db.execute("DELETE FROM exam_schedule WHERE student_id = ?", [studentId]);
+            console.log('Deleted from exam_schedule (if existed)');
+        } catch (e) {
+            // Ignore error if table doesn't exist
+            console.log('Skipped exam_schedule deletion (table might not exist)');
+        }
+
+        // clearance_requests has CASCADE in schema, but we do it manually to be 100% sure across any DB variation
         await db.execute("DELETE FROM clearance_requests WHERE student_id = ?", [studentId]);
 
         // 3. Delete the main student record
@@ -684,7 +697,12 @@ exports.deleteStudent = async (req, res) => {
 exports.toggleStudentStatus = async (req, res) => {
     try {
         const db = req.db;
-        const { studentId } = req.params;
+        const { studentId } = req.body;
+
+        if (!studentId) {
+            return res.status(400).json({ success: false, message: 'Student ID is required' });
+        }
+
         const [students] = await db.execute("SELECT status, name, last_name FROM student WHERE student_id = ?", [studentId]);
 
         if (students.length === 0) return res.status(404).json({ success: false, message: 'Student not found' });
@@ -699,7 +717,7 @@ exports.toggleStudentStatus = async (req, res) => {
         res.json({ success: true, message: `Student marked as ${newStatus}` });
     } catch (error) {
         console.error('💥 Toggle status error:', error);
-        res.status(500).json({ success: false, message: 'Failed to toggle status' });
+        res.status(500).json({ success: false, message: 'Failed to toggle status: ' + error.message });
     }
 };
 
@@ -712,6 +730,8 @@ exports.bulkStudentActions = async (req, res) => {
             return res.status(400).json({ success: false, message: 'No students selected' });
         }
 
+        console.log(`🚀 Processing BULK Action: ${bulk_action} for ${selected_students.length} students`);
+
         if (bulk_action === 'delete') {
             const placeholders = selected_students.map(() => '?').join(',');
 
@@ -719,6 +739,13 @@ exports.bulkStudentActions = async (req, res) => {
             const [students] = await db.execute(`SELECT profile_picture FROM student WHERE student_id IN (${placeholders})`, selected_students);
 
             // 2. Delete from all related tables
+
+            // Try deleting from exam_schedule from dependent tables
+            try {
+                await db.execute(`DELETE FROM exam_schedule WHERE student_id IN (${placeholders})`, selected_students);
+            } catch (e) {
+                // Ignore
+            }
 
             await db.execute(`DELETE FROM clearance_requests WHERE student_id IN (${placeholders})`, selected_students);
 
@@ -741,13 +768,19 @@ exports.bulkStudentActions = async (req, res) => {
         } else if (bulk_action === 'activate' || bulk_action === 'deactivate') {
             const newStatus = bulk_action === 'activate' ? 'active' : 'inactive';
             const placeholders = selected_students.map(() => '?').join(',');
+
+            console.log(`Setting status to ${newStatus} for students:`, selected_students);
+
             await db.execute(`UPDATE student SET status = ? WHERE student_id IN (${placeholders})`, [newStatus, ...selected_students]);
+
+            // Log update
+            await logger.log(req, 'BULK_STATUS_UPDATE', null, `Bulk set status to ${newStatus} for ${selected_students.length} students.`);
         }
 
         res.json({ success: true, message: 'Bulk action completed successfully' });
     } catch (error) {
         console.error('💥 Bulk action error:', error);
-        res.status(500).json({ success: false, message: 'Bulk action failed' });
+        res.status(500).json({ success: false, message: 'Bulk action failed: ' + error.message });
     }
 };
 
