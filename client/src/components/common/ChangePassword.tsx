@@ -99,8 +99,8 @@ const ChangePassword: React.FC = () => {
                         <div className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-indigo-700 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-6 shadow-xl shadow-indigo-200 ring-8 ring-indigo-50">
                             <span className="animate-pulse">🔐</span>
                         </div>
-                        <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Security Protocol</h2>
-                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mt-2 px-4">Initialize password update to maintain account integrity</p>
+                        <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Access Control</h2>
+                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mt-2 px-4">Update your credentials for DBU Clearance System</p>
                     </div>
 
                     {message && (
@@ -118,10 +118,10 @@ const ChangePassword: React.FC = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
                         <div className="space-y-2">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Current Authorization</label>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Verification of Current Identity</label>
                             <input
                                 type="password"
-                                placeholder="Enter current password"
+                                placeholder="Enter your current password"
                                 value={oldPassword}
                                 onChange={(e) => setOldPassword(e.target.value)}
                                 className="settings-input-field"
@@ -131,10 +131,10 @@ const ChangePassword: React.FC = () => {
 
                         <div className="grid gap-6">
                             <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">New Security Hash</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Define New Security Key</label>
                                 <input
                                     type="password"
-                                    placeholder="Minimum 8 characters"
+                                    placeholder="Enter your strong new password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     className="settings-input-field"
@@ -142,10 +142,10 @@ const ChangePassword: React.FC = () => {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Verify New Hash</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Confirm New Identification</label>
                                 <input
                                     type="password"
-                                    placeholder="Repeat new password"
+                                    placeholder="Verify your new password accurately"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     className="settings-input-field"
@@ -162,12 +162,12 @@ const ChangePassword: React.FC = () => {
                             {submitting ? (
                                 <>
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    Syncing Protocol...
+                                    Syncing Credentials...
                                 </>
                             ) : (
                                 <>
-                                    Update Password
-                                    <span className="text-lg group-hover:translate-x-1 transition-transform">🔒</span>
+                                    Commit Password Change
+                                    <span className="text-lg group-hover:translate-x-1 transition-transform">🔐</span>
                                 </>
                             )}
                         </button>

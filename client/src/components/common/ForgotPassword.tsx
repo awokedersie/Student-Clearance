@@ -113,12 +113,12 @@ const ForgotPassword: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="form-label">Institutional Email</label>
+                                    <label className="form-label">Email</label>
                                     <input
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="institutional@dbu.edu.et"
+                                        placeholder="Enter your email"
                                         className="input-field"
                                         required
                                     />
