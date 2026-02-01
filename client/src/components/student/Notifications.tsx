@@ -47,15 +47,15 @@ const Notifications: React.FC = () => {
             <div className="feed-container">
                 <div className="feed-header">
                     <div>
-                        <h2 className="text-3xl font-black text-gray-900 tracking-tight uppercase">Intelligence Feed</h2>
-                        <p className="text-gray-400 text-[10px] font-black uppercase tracking-[3px] mt-2">Historical and recent clearance updates</p>
+                        <h2 className="text-3xl font-black text-gray-900 tracking-tight uppercase">Notifications</h2>
+                        <p className="text-gray-400 text-[10px] font-black uppercase tracking-[3px] mt-2">Your clearance status updates and announcements</p>
                     </div>
                     {showDownloadButton && (
                         <button
                             onClick={() => window.open('/student/download-certificate', '_blank')}
                             className="download-premium-btn"
                         >
-                            <span className="text-lg group-hover:animate-bounce">📥</span> Download Final Certificate
+                            <span className="text-lg group-hover:animate-bounce">📥</span> Download Clearance Certificate
                         </button>
                     )}
                 </div>
@@ -67,8 +67,8 @@ const Notifications: React.FC = () => {
                             <div className="w-24 h-24 bg-white rounded-3xl shadow-xl flex items-center justify-center text-4xl mx-auto mb-8 border border-gray-50 transform rotate-3 grayscale opacity-30">
                                 📬
                             </div>
-                            <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Signal Clear</h3>
-                            <p className="text-gray-400 mt-3 font-medium text-sm max-w-xs mx-auto">No pending alerts or clearance updates detected at this terminal.</p>
+                            <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">No Notifications</h3>
+                            <p className="text-gray-400 mt-3 font-medium text-sm max-w-xs mx-auto">You don’t have any clearance updates at the moment.</p>
                         </div>
                     </div>
                 ) : (
@@ -87,7 +87,7 @@ const Notifications: React.FC = () => {
                                         <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                                             <div className="flex items-center gap-3">
                                                 <h4 className="font-black text-gray-900 uppercase tracking-tight text-xl leading-none">
-                                                    Status Protocol: <span className={n.status === 'approved' ? 'text-emerald-500' : 'text-rose-500'}>{n.status}</span>
+                                                    Clearance Status: <span className={n.status === 'approved' ? 'text-emerald-500' : 'text-rose-500'}>{n.status}</span>
                                                 </h4>
                                                 {!n.is_read && (
                                                     <span className="notification-new-pill">

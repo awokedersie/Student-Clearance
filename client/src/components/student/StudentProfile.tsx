@@ -212,7 +212,7 @@ const StudentProfile: React.FC = () => {
                                     />
                                 </div>
                                 <div className="sm:col-span-2">
-                                    <label className="profile-input-label">Email Terminal</label>
+                                    <label className="profile-input-label">Email Address</label>
                                     <input
                                         type="email"
                                         value={formData.email}
@@ -221,7 +221,7 @@ const StudentProfile: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="profile-input-label">Communications Port (Phone)</label>
+                                    <label className="profile-input-label">Phone Number</label>
                                     <input
                                         type="text"
                                         value={formData.phone}

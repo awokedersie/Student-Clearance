@@ -59,7 +59,7 @@ const ClearanceStatus: React.FC = () => {
                             </div>
                             <h3 className="text-xl font-black text-gray-900">No requests found</h3>
                             <p className="text-gray-500 mt-2 max-w-sm mx-auto font-medium leading-relaxed">
-                                You haven't submitted any clearance requests for the current academic year yet.
+                                You have not submitted a clearance request for this academic year.
                             </p>
                             <Link
                                 to="/student/clearance-request"

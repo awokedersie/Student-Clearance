@@ -40,7 +40,7 @@ const ChangePassword: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (newPassword !== confirmPassword) {
-            setMessage({ type: 'error', text: 'New passwords do not match' });
+            setMessage({ type: 'error', text: 'Passwords do not match. Please try again.' });
             return;
         }
 
@@ -67,7 +67,7 @@ const ChangePassword: React.FC = () => {
         } catch (error: any) {
             setMessage({
                 type: 'error',
-                text: error.response?.data?.message || 'Password update failed'
+                text: error.response?.data?.message || 'Unable to update password. Please try again.'
             });
         } finally {
             setSubmitting(false);
@@ -99,8 +99,8 @@ const ChangePassword: React.FC = () => {
                         <div className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-indigo-700 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-6 shadow-xl shadow-indigo-200 ring-8 ring-indigo-50">
                             <span className="animate-pulse">🔐</span>
                         </div>
-                        <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Security Protocol</h2>
-                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mt-2 px-4">Initialize password update to maintain account integrity</p>
+                        <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Change Password</h2>
+                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mt-2 px-4">Update your account password to keep it secure</p>
                     </div>
 
                     {message && (
@@ -118,10 +118,10 @@ const ChangePassword: React.FC = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
                         <div className="space-y-2">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Current Authorization</label>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Current Password</label>
                             <input
                                 type="password"
-                                placeholder="Enter current password"
+                                placeholder="Your current password"
                                 value={oldPassword}
                                 onChange={(e) => setOldPassword(e.target.value)}
                                 className="settings-input-field"
@@ -131,7 +131,7 @@ const ChangePassword: React.FC = () => {
 
                         <div className="grid gap-6">
                             <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">New Security Hash</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">New Password</label>
                                 <input
                                     type="password"
                                     placeholder="Minimum 8 characters"
@@ -142,10 +142,10 @@ const ChangePassword: React.FC = () => {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Verify New Hash</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Confirm New Password</label>
                                 <input
                                     type="password"
-                                    placeholder="Repeat new password"
+                                    placeholder="Re-enter new password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     className="settings-input-field"
@@ -162,7 +162,8 @@ const ChangePassword: React.FC = () => {
                             {submitting ? (
                                 <>
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    Syncing Protocol...
+                                    Updating password...
+
                                 </>
                             ) : (
                                 <>
