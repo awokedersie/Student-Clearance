@@ -62,7 +62,7 @@ const AdminLogin: React.FC = () => {
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 className="admin-input"
-                                placeholder="Enter admin username"
+                                placeholder="Enter your username"
                                 required
                             />
                         </div>

@@ -159,7 +159,7 @@ const SystemDashboard: React.FC = () => {
                         </div>
                         <div className="mt-4 text-center">
                             <p className="text-2xl font-black text-gray-900">{((stats.active_students / stats.total_students) * 100).toFixed(1)}%</p>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active Enrollment</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active Students</p>
                         </div>
                     </div>
                 </div>

@@ -133,7 +133,7 @@ const Login: React.FC = () => {
                 </div>
 
                 <p className="copyright-text">
-                    © 2024 DEBRE BERHAN UNIVERSITY
+                    © 2025 DEBRE BERHAN UNIVERSITY
                 </p>
             </div>
         </div>
