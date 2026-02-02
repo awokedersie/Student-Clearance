@@ -38,7 +38,7 @@ router.post('/system/manage-students/toggle-status', requireSystemAdmin, systemC
 router.post('/system/manage-students/bulk-actions', requireSystemAdmin, systemController.bulkStudentActions);
 
 // Audit Logs (Accessible by System Admin & Registrar)
-router.get('/system/audit-logs/data', requireRegistrarAdmin, systemController.getAuditLogs);
+router.get('/system/audit-logs/data', requireSystemAdmin, systemController.getAuditLogs);
 
 
 module.exports = router;
