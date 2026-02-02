@@ -15,8 +15,10 @@ const storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
         const fileExt = path.extname(file.originalname).toLowerCase();
-        // Sanitize student_id
-        const safeId = req.session.user.student_id.replace(/[\/\\]/g, '_');
+        // Determine the student ID for the filename
+        // If it's a student, it's in the session. If it's an admin, it's in the body.
+        let studentId = (req.session.user && req.session.user.student_id) || (req.body && req.body.student_id) || 'unknown';
+        const safeId = studentId.replace(/[\/\\]/g, '_');
         const filename = `profile_${safeId}_${Date.now()}${fileExt}`;
         cb(null, filename);
     }

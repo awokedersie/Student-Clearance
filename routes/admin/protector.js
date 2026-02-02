@@ -24,4 +24,7 @@ router.get('/protector/dashboard', requireProtectorAdmin, (req, res, next) => {
     next();
 });
 
+// Verify Exit Action
+router.post('/protector/dashboard', requireProtectorAdmin, protectorController.verifyExit);
+
 module.exports = router;

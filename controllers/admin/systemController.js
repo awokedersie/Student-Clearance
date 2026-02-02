@@ -1,6 +1,39 @@
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
+const path = require('path');
 const logger = require('../../utils/logger');
 const responseHandler = require('../../utils/responseHandler');
+
+// Simple image validation
+async function validateImageSimple(filePath) {
+    return new Promise((resolve) => {
+        if (!fs.existsSync(filePath)) {
+            resolve(false);
+            return;
+        }
+
+        const fd = fs.openSync(filePath, 'r');
+        const buffer = Buffer.alloc(8);
+        fs.readSync(fd, buffer, 0, 8, 0);
+        fs.closeSync(fd);
+
+        // Check for JPEG magic numbers
+        if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
+            resolve(true);
+            return;
+        }
+
+        // Check for PNG magic numbers
+        if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E &&
+            buffer[3] === 0x47 && buffer[4] === 0x0D && buffer[5] === 0x0A &&
+            buffer[6] === 0x1A && buffer[7] === 0x0A) {
+            resolve(true);
+            return;
+        }
+
+        resolve(false);
+    });
+}
 
 // Helper function to get the appropriate dashboard path
 function getDashboardPath(role) {
@@ -586,14 +619,41 @@ exports.updateStudent = async (req, res) => {
     try {
         const db = req.db;
         const { student_id, name, last_name, username, password, email, phone, department, year, semester, status } = req.body;
-        const profile_picture = req.file ? req.file.path.replace(/\\/g, '/') : null;
+
+        // Fetch existing student data for cleanup
+        const [existingStudents] = await db.execute("SELECT profile_picture FROM student WHERE student_id = ?", [student_id]);
+        const existingStudent = existingStudents[0];
 
         // Email Validation (if changed or present)
         if (email) {
+            const { validateEmail } = require('../../utils/emailValidator');
             const emailValidation = await validateEmail(email);
             if (!emailValidation.isValid) {
-                if (req.file) { try { require('fs').unlinkSync(req.file.path); } catch (e) { } } // Cleanup
+                if (req.file) { try { fs.unlinkSync(req.file.path); } catch (e) { } } // Cleanup
                 return res.status(400).json({ success: false, message: emailValidation.error });
+            }
+        }
+
+        let profile_picture = existingStudent ? existingStudent.profile_picture : null;
+
+        if (req.file) {
+            console.log('📸 New profile photo uploaded by admin for:', student_id);
+            const isImage = await validateImageSimple(req.file.path);
+            if (!isImage) {
+                fs.unlinkSync(req.file.path);
+                return res.status(400).json({ success: false, message: 'Invalid image file. Only JPG and PNG are allowed.' });
+            }
+
+            profile_picture = req.file.path.replace(/\\/g, '/');
+
+            // Delete old photo
+            if (existingStudent && existingStudent.profile_picture && existingStudent.profile_picture !== profile_picture) {
+                const oldPath = path.join(__dirname, '..', '..', existingStudent.profile_picture);
+                if (fs.existsSync(oldPath)) {
+                    try { fs.unlinkSync(oldPath); } catch (e) {
+                        console.warn('⚠️ Could not delete old profile pic:', e.message);
+                    }
+                }
             }
         }
 
@@ -606,7 +666,7 @@ exports.updateStudent = async (req, res) => {
             params.push(hashedPassword);
         }
 
-        if (profile_picture) {
+        if (profile_picture || profile_picture === null) {
             query += ", profile_picture = ?";
             params.push(profile_picture);
         }
@@ -620,7 +680,7 @@ exports.updateStudent = async (req, res) => {
         res.json({ success: true, message: 'Student updated successfully' });
     } catch (error) {
         console.error('💥 Update student error:', error);
-        res.status(500).json({ success: false, message: 'Failed to update student' });
+        res.status(500).json({ success: false, message: 'Internal Server Error: ' + error.message });
     }
 };
 

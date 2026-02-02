@@ -15,6 +15,8 @@ interface ClearanceRecord {
     can_approve?: boolean | number;
     can_reject?: boolean | number;
     locked_by_dept?: string | null;
+    exit_verified?: boolean;
+    exit_time?: string;
 }
 
 const DepartmentDashboard: React.FC = () => {
@@ -143,6 +145,28 @@ const DepartmentDashboard: React.FC = () => {
         }
     };
 
+    const handleVerifyExit = async (studentId: string) => {
+        if (!confirm('Confirm exit verification for this student?')) return;
+        setSubmitting(true);
+        try {
+            const response = await axios.post(apiPath, {
+                student_id: studentId
+            });
+
+            if (response.data.success) {
+                showMessage(response.data.message || 'Exit verified successfully!', 'success');
+                fetchData();
+            } else {
+                showMessage(response.data.message || 'Verification failed', 'error');
+            }
+        } catch (error: any) {
+            console.error('Exit verification failed:', error);
+            showMessage(error.response?.data?.message || 'Verification failed', 'error');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const toggleSelection = (id: number, studentId: string) => {
         setSelectedItems(prev => {
             const isSelected = prev.some(item => item.studentId === studentId);
@@ -237,6 +261,16 @@ const DepartmentDashboard: React.FC = () => {
                             <div>
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 italic">Students Cleared for Exit</p>
                                 <p className="text-3xl font-black text-gray-900">{stats.total || 0}</p>
+                            </div>
+                            <div className="ml-auto flex gap-4">
+                                <div className="text-center">
+                                    <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Exited</p>
+                                    <p className="text-xl font-bold text-emerald-600">{stats.approved || 0}</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Pending</p>
+                                    <p className="text-xl font-bold text-amber-600">{stats.pending || 0}</p>
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -387,6 +421,12 @@ const DepartmentDashboard: React.FC = () => {
                                     {!isProtector && (
                                         <th className="admin-table-th text-right">Review Action</th>
                                     )}
+                                    {isProtector && (
+                                        <>
+                                            <th className="admin-table-th">Exit Status</th>
+                                            <th className="admin-table-th text-right">Action</th>
+                                        </>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -446,6 +486,41 @@ const DepartmentDashboard: React.FC = () => {
                                                     {req.updated_at ? new Date(req.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                                 </p>
                                             </td>
+                                            {isProtector && (
+                                                <td className="admin-table-td">
+                                                    {req.exit_verified ? (
+                                                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                            <span className="text-[10px] font-black uppercase tracking-widest">Exited</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100">
+                                                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                                            <span className="text-[10px] font-black uppercase tracking-widest">Not Exited</span>
+                                                        </div>
+                                                    )}
+                                                    {req.exit_time && (
+                                                        <p className="text-[9px] text-gray-400 mt-1 pl-1">
+                                                            {new Date(req.exit_time).toLocaleString()}
+                                                        </p>
+                                                    )}
+                                                </td>
+                                            )}
+                                            {isProtector && (
+                                                <td className="admin-table-td text-right">
+                                                    {!req.exit_verified ? (
+                                                        <button
+                                                            onClick={() => handleVerifyExit(req.student_id)}
+                                                            disabled={submitting}
+                                                            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+                                                        >
+                                                            <span>🚪</span> Verify Exit
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-emerald-500 text-sm">✅ Verified</span>
+                                                    )}
+                                                </td>
+                                            )}
                                             {!isProtector && (
                                                 <td className="admin-table-td text-right relative">
                                                     <div className="flex justify-end">
