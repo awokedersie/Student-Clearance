@@ -242,6 +242,22 @@ const ManageAdmins: React.FC = () => {
                                         </div>
                                     )}
                                     <div className="space-y-2">
+                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Email Address</label>
+                                        <input
+                                            type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                            className="mgmt-modal-input"
+                                            placeholder="email@dbu.edu.et"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Phone Number</label>
+                                        <input
+                                            required value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                            className="mgmt-modal-input"
+                                            placeholder="+251..."
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
                                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Username</label>
                                         <input
                                             required value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })}
