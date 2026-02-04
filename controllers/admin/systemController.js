@@ -302,14 +302,14 @@ exports.handleClearanceAction = async (req, res) => {
             const end = new Date(current.end_date);
 
             if (now > end) {
-                // If the end date has passed, reset start to now and end to 7 days from now
+                // If the end date has passed, reset start to now and end to 5 days from now
                 const newEnd = new Date(now);
-                newEnd.setDate(newEnd.getDate() + 7);
+                newEnd.setDate(newEnd.getDate() + 5);
                 await db.execute(
                     "UPDATE clearance_settings SET is_active = TRUE, start_date = ?, end_date = ? WHERE id = ?",
                     [now, newEnd, current.id]
                 );
-                message = 'Clearance system activated and dates adjusted (extended to 7 days from now)';
+                message = 'Clearance system activated and dates adjusted (extended to 5 days from now)';
             } else {
                 await db.execute("UPDATE clearance_settings SET is_active = TRUE WHERE id = ?", [current.id]);
                 message = 'Clearance system activated';

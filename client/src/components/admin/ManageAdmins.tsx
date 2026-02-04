@@ -124,7 +124,7 @@ const ManageAdmins: React.FC = () => {
                     <form onSubmit={(e) => { e.preventDefault(); fetchData(search); }} className="flex gap-2 w-full md:w-auto">
                         <input
                             type="text"
-                            placeholder="Search by ID..."
+                            placeholder="Search by name or ID..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="mgmt-search-input"
@@ -246,7 +246,7 @@ const ManageAdmins: React.FC = () => {
                                         <input
                                             type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })}
                                             className="mgmt-modal-input"
-                                            placeholder="email@dbu.edu.et"
+                                            placeholder="Enter admin email"
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -254,7 +254,7 @@ const ManageAdmins: React.FC = () => {
                                         <input
                                             required value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                             className="mgmt-modal-input"
-                                            placeholder="+251..."
+                                            placeholder="Enter phone number"
                                         />
                                     </div>
                                     <div className="space-y-2">
