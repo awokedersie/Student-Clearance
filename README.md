@@ -1,67 +1,62 @@
-# 🎓 DBU Clearance Management System
+# 🎓 DBU Online Student Clearance System
 ### *State-of-the-Art Digital Clearance Solution for Debre Berhan University*
 
 ---
 
-## 📝 Overview
-The **DBU Clearance System** is a comprehensive web-based platform designed to digitize and streamline the traditional manual student clearance process. It provides a synchronized ecosystem for students, department heads, administrative offices, and the registrar to manage clearance requests with speed, transparency, and security.
+## 📝 Project Overview
+The **DBU Clearance System** is a comprehensive full-stack web application designed to digitize and automate the traditional manual student clearance process at Debre Berhan University. It eliminates paperwork, reduces wait times, and provides real-time transparency for students and administrators alike.
 
 ---
 
-## 🛠️ Technology Stack
+## 🛠️ Modern Technology Stack
+The system is built using industry-standard technologies to ensure scalability, security, and performance.
+
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React.js, Tailwind CSS, Vite, Axios, Framer Motion |
-| **Backend** | Node.js, Express.js |
-| **Database** | MySQL (with connection pooling) |
-| **Authentication** | Session-based Auth, Bcrypt.js (Password Hashing) |
-| **Communication** | Nodemailer (SMTP Service), DNS MX Record Verification |
-| **Storage** | Multer (Profile Picture & Document uploads) |
-| **Typography** | Google Fonts (Outfit, Inter) |
+| **Frontend** | React.js (Vite), Tailwind CSS (Premium Styling), Framer Motion (Animations), Axios |
+| **Backend** | Node.js, Express.js (Modular Architecture) |
+| **Database** | PostgreSQL (Neon.tech) |
+| **Real-time** | Nodemailer (SMTP Service) with Render-optimized links |
+| **Security** | Session-based Auth, Bcrypt.js, Helmet.js, Rate Limiting, DNS MX Verification |
+| **File Storage** | Multer (Profile Pictures & Document Uploads) |
 
 ---
 
-## 🕹️ Core Functionality
+## 🚀 Key Features
 
-### 1. 👨‍🎓 Student Portal
-- **Dashboard**: Real-time overview of clearance status, dynamic 3-day window countdown, and unread notifications.
-- **Clearance Requests**: One-click application for university clearance.
-- **Smart Chatbot**: AI-powered assistant to answer frequently asked questions about the process.
-- **Profile Management**: Secure profile updates with photo uploads and real-time email domain verification.
-- **Certificate Access**: Instant download of the clearance certificate once finalized.
+### 1. 👨‍🎓 Intelligent Student Portal
+- **Real-time Dashboard**: Live countdown of the 3-day clearance window, status badges, and prioritized tasks.
+- **Unified Clearance Request**: A single-click application that triggers the entire institutional workflow.
+- **Digital Clearance Certificate**: Automatically generated upon Registrar approval, featuring a secure "Final Seal."
+- **Profile Management**: Dynamic photo uploading and real-time email domain verification to prevent fake accounts.
 
-### 2. 👨‍💼 Administrative Ecosystem
-- **System Admin**: Complete control over clearance windows (activation/scheduling), student data management, and admin auditing.
-- **Departmental Admins**: Specialized dashboards for Library, Cafeteria, Dormitory, Department Head, and Personal Protector.
-- **Registrar Office**: The final authority to review all approvals and issue the final clearance certificate.
-- **Bulk Actions**: Support for handling hundreds of approvals simultaneously.
+### 2. 🛡️ Administrative Ecosystem
+- **Sequential Chain of Responsibility**: Approvals flow logically from **Library → Cafeteria → Dormitory → Department Head → Registrar**.
+- **Adaptive Locking Logic**: A groundbreaking security feature that allows admins to undo decisions *only* if the next department in the chain hasn't yet acted.
+- **Bulk Processing Engine**: Handle hundreds of clearance requests simultaneously with automated conflict resolution.
+- **Audit Logs**: Enhanced traceability including **student names**, admin IDs, IP addresses, and detailed action timestamps.
+- **Special Clearance Management**: Dedicated module for handling withdrawals, transfers, and disciplinary exceptions.
 
-### 3. 📧 Notification System
-- **Real-time Emails**: Automated confirmation sent to students for approvals, rejections (with reasons), and account creation.
-- **Smart Badging**: Dynamic UI badges in the sidebar and top navigation for unread notifications.
+### 3. 📧 Advanced Communication
+- **Context-Aware Emails**: Custom-styled HTML email templates for Approval/Rejection/Recovery.
+- **Production-Ready Links**: Automated link generation pointing to the live Render deployment (`https://dbu-clearance-system.onrender.com`).
 
 ---
 
-## 🔄 System Workflow & Approval Logic
+## 🔄 The Modular Workflow
 
-The DBU Clearance System follows a strict **Sequential Chain of Responsibility** to ensure all university property is returned and obligations met before a student is cleared.
+### 🌊 Sequential Approval Chain
+The system enforces a strict business logic to ensure no property is left unreturned:
+1.  **Library**: Clears books, digital resources, and library cards.
+2.  **Cafeteria**: Verifies no outstanding mess fees or returned utensils.
+3.  **Dormitory**: Confirms room keys and furniture are in original condition.
+4.  **Department Head**: Final academic check for grades and departmental equipment.
+5.  **Registrar (Final Seal)**: The ultimate authority. Approving here generates the certificate and marks the student as "Inactive."
 
-### 🌊 The Clearance Chain
-1. **System Activation**: The System Admin opens the clearance window for the specific academic year.
-2. **Student Request**: Students submit a clearance request through their portal.
-3. **Sequential Approval**:
-    - **Stage 1: Library** (Physical books & digital resources)
-    - **Stage 2: Cafeteria** (Dining hall fees & equipment)
-    - **Stage 3: Dormitory** (Housing items & key returns)
-    - **Stage 4: Department Head** (Departmental equipment & grades)
-    - **Stage 5: Registrar (Final Seal)** (Official records & certificate generation)
-
-### 🔒 Adaptive Locking Mechanism
-To balance security with administrative flexibility, the system employs a smart locking logic:
-- **Decision Reversibility**: An administrator can toggle their decision (Approved ↔ Rejected) as long as the student has not been approved by the **next** department in the chain. 
-    - *Example: The Library admin can "Undo" an approval if they find a mistake later, provided the Cafeteria has not yet approved that student.*
-- **Permanent Lock**: Once a subsequent stage approves a student, all preceding approvals for that student become **permanently locked** to prevent tampering with a finalized chain.
-- **Registrar Finality**: The Registrar's approval is the definitive action that mark's a student's system status as "Cleared" and triggers the generation of the Digital Clearance Certificate.
+### 🔒 Security & Integrity
+- **Route Guards**: Middleware-based protection.
+- **Session Persistence**: Secure PostgreSQL-backed sessions (via `connect-pg-simple`) for reliable admin login.
+- **Hashed Secrets**: All sensitive data is encrypted using salt-rounds performance-optimized Bcrypt.
 
 ### 📊 Workflow Diagram
 ```mermaid
@@ -84,11 +79,28 @@ graph TD
 
 ---
 
+## 📂 Project Architecture
+```text
+/
+├── client/              # React frontend (Vite + Tailwind)
+│   ├── src/components/   # UI Modules (Dashboards, Logs, Settings)
+│   └── public/           # Static assets & Icons
+├── routes/              # Express API Routes (Modularized by Role)
+├── controllers/         # Core Business Logic & DB Queries
+├── middleware/          # Security & Auth Guards
+├── config/              # DB, Email, & Env Configuration
+├── utils/               # Loggers & Response Handlers
+├── uploads/             # Student Profile Pictures
+└── server.js            # Main Entry Point & Middleware Chain
+```
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js (v14+)
-- MySQL Server
+- PostgreSQL Database (Neon or Local)
 - Gmail App Password (for SMTP)
 
 ### Installation
@@ -101,17 +113,14 @@ graph TD
 2. **Setup Backend**
    - Create a `.env` file in the root directory:
      ```env
-     DB_HOST=localhost
-     DB_USER=root
-     DB_PASSWORD=""
-     DB_NAME=clearance
+     DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
      EMAIL_USER=your-email@gmail.com
      EMAIL_PASS=your-app-password
      SESSION_SECRET=your_secret
      PORT=3000
      ```
    - Install dependencies: `npm install`
-   - Import `schema.sql` into your MySQL database.
+   - Run the SQL schema script in your PostgreSQL database (`schema_pg.sql`).
 
 3. **Setup Frontend**
    - Navigate to `/client`
@@ -125,19 +134,31 @@ graph TD
 
 ---
 
-## 📁 Project Structure
-- **/client**: React frontend source code and design system.
-- **/routes**: API endpoint logic (Modularized by role: student, admin, registrar, etc.).
-- **/uploads**: Storage for profile pictures and documents.
-- **server.js**: Entry point and middleware configuration.
-- **schema.sql**: Database structure and seed data.
+## ☁️ Deployment Guide (Render + Neon)
+
+This guide shows you how to deploy this full-stack PERN application (PostgreSQL, Express, React, Node) for free using **Neon** (Database) and **Render** (Web Service).
+
+### Step 1: Set up the Database (Neon)
+1. Go to [Neon.tech](https://neon.tech) and create a free project.
+2. Copy the **Connection String** provided by Neon (e.g., `postgres://user:pass@host/db...`).
+
+### Step 2: Deploy to Render
+1. Go to [Render.com](https://render.com), create a **Web Service**, and connect your GitHub repo.
+2. Settings:
+   - **Build Command**: `npm run build`
+   - **Start Command**: `npm start`
+3. **Environment Variables**: Add these in the Render dashboard:
+   - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`: Use values from Neon.
+   - `PGSSLMODE`: `require` (Crucial for Neon connection).
+   - `NODE_ENV`: `production`
+   - `EMAIL_USER` & `EMAIL_PASS`: Your Gmail credentials.
+
+### Step 3: Run Database Migration
+Once deployed, go to the **Shell** tab in Render and run:
+```bash
+node setup_pg.js
+```
+This initializes the database tables in your live Neon instance.
 
 ---
-
-## 🛡️ Security Features
-- **Route Guards**: Middleware-based protection ensures users can only access their authorized portals.
-- **DNS Validation**: Real-time domain checking for email addresses to prevent fake registrations.
-- **Hashed Secrets**: All passwords and session keys are encrypted using industry-standard protocols.
-
----
-© 2025 Debre Berhan University. Digital Transformation Initiative.
+© 2025 Debre Berhan University. *Digitizing the future of campus management.*
