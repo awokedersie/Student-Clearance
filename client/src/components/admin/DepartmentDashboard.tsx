@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
+import Loading from '../common/Loading';
 
 interface ClearanceRecord {
     id: number;
@@ -32,6 +33,15 @@ const DepartmentDashboard: React.FC = () => {
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [bulkDropdownOpen, setBulkDropdownOpen] = useState(false);
     const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+    const [expandedDetails, setExpandedDetails] = useState<string[]>([]);
+
+    const toggleDetails = (studentId: string) => {
+        setExpandedDetails(prev =>
+            prev.includes(studentId)
+                ? prev.filter(id => id !== studentId)
+                : [...prev, studentId]
+        );
+    };
 
     const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ message, type });
@@ -189,14 +199,7 @@ const DepartmentDashboard: React.FC = () => {
         }
     };
 
-    if (loading && !data) return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="p-20 text-center">
-                <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-500 font-black uppercase tracking-widest text-[10px]">Synchronising Dashboard Data...</p>
-            </div>
-        </div>
-    );
+    if (loading && !data) return <Loading />;
 
     const { user, all_requests = [], stats = {} } = data || {};
     const isRegistrar = location.pathname.includes('registrar');
@@ -401,7 +404,7 @@ const DepartmentDashboard: React.FC = () => {
 
                 {/* Requests Table */}
                 <div className="admin-table-wrapper">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto pb-32">
                         <table className="w-full text-left">
                             <thead className="bg-gray-50/50 border-b border-gray-100/50">
                                 <tr>
@@ -432,11 +435,16 @@ const DepartmentDashboard: React.FC = () => {
                             <tbody className="divide-y divide-gray-50">
                                 {all_requests.length === 0 ? (
                                     <tr>
-                                        <td colSpan={isProtector ? 3 : 5} className="p-20 text-center italic text-gray-400">No clearance requests found for these filters.</td>
+                                        <td colSpan={isProtector ? 3 : 5} className="p-20 text-center italic text-gray-400">
+                                            {statusFilter === 'approved' ? 'No Approved student found.' :
+                                                statusFilter === 'rejected' ? 'No Rejected student found.' :
+                                                    statusFilter === 'pending' ? 'No Pending requests found.' :
+                                                        'No clearance requests found for these filters.'}
+                                        </td>
                                     </tr>
                                 ) : (
                                     all_requests.map((req: any) => (
-                                        <tr key={req.student_id} className={`admin-table-row ${selectedItems.some(item => item.studentId === req.student_id) ? 'bg-indigo-50/30' : ''}`}>
+                                        <tr key={req.student_id} className={`admin-table-row ${selectedItems.some(item => item.studentId === req.student_id) ? 'bg-indigo-50/30' : ''} ${activeDropdown === req.student_id ? 'relative z-50' : ''}`}>
                                             {!isProtector && (
                                                 <td className="admin-table-td">
                                                     {!req.is_locked && (
@@ -454,7 +462,7 @@ const DepartmentDashboard: React.FC = () => {
                                                 <p className="text-xs font-mono text-gray-400 mt-1">{req.student_id}</p>
                                             </td>
                                             <td className="admin-table-td">
-                                                <div className="flex flex-col gap-1">
+                                                <div className="flex flex-col gap-2">
                                                     <div className={`status-pill-premium ${req.status === 'approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                                                         req.status === 'rejected' ? 'bg-red-50 text-red-600 border-red-100' :
                                                             'bg-amber-50 text-amber-600 border-amber-100'
@@ -464,6 +472,39 @@ const DepartmentDashboard: React.FC = () => {
                                                             }`}></span>
                                                         {req.status}
                                                     </div>
+
+                                                    {/* Details Toggle */}
+                                                    {(req.reason || (req.status === 'rejected' && req.reject_reason)) && (
+                                                        <button
+                                                            onClick={() => toggleDetails(req.student_id)}
+                                                            className="text-[10px] font-bold text-gray-500 hover:text-indigo-600 flex items-center gap-1 transition-colors self-start mt-1 focus:outline-none"
+                                                        >
+                                                            {expandedDetails.includes(req.student_id) ? 'Hide Details' : 'View Details'}
+                                                            <span className={`transition-transform duration-200 ${expandedDetails.includes(req.student_id) ? 'rotate-180' : ''}`}>▾</span>
+                                                        </button>
+                                                    )}
+
+                                                    {/* Expanded Details Content */}
+                                                    {expandedDetails.includes(req.student_id) && (
+                                                        <div className="flex flex-col gap-2 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                            {/* Student's Request Reason */}
+                                                            {req.reason && (
+                                                                <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100 max-w-xs">
+                                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Student's Reason</p>
+                                                                    <p className="text-[10px] text-gray-600 italic leading-relaxed">"{req.reason}"</p>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Rejection Reason */}
+                                                            {req.status === 'rejected' && req.reject_reason && (
+                                                                <div className="bg-red-50 p-2.5 rounded-lg border border-red-100 max-w-xs">
+                                                                    <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-1">Rejection Reason</p>
+                                                                    <p className="text-[10px] text-red-700 font-medium leading-relaxed">"{req.reject_reason}"</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
                                                     {req.is_locked && (
                                                         <div className="inline-flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-indigo-400 px-2 py-0.5 bg-indigo-50/50 rounded-md border border-indigo-100/50 self-start mt-1">
                                                             <span>🔒</span>
@@ -476,7 +517,6 @@ const DepartmentDashboard: React.FC = () => {
                                                         </div>
                                                     )}
                                                 </div>
-                                                {req.reason && <p className="text-[10px] text-gray-400 italic mt-2 leading-relaxed max-w-xs">{req.reason}</p>}
                                             </td>
                                             <td className="admin-table-td">
                                                 <p className="text-xs text-gray-500 font-medium">

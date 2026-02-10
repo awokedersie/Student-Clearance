@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
+import Loading from '../common/Loading';
 
 interface Admin {
     id: number;
@@ -99,7 +100,7 @@ const ManageAdmins: React.FC = () => {
         }
     };
 
-    if (loading && !data) return <div className="p-8 text-center text-gray-500 font-medium">Loading Admins...</div>;
+    if (loading && !data) return <Loading />;
 
     const { admins = [], departments = [], user } = data || {};
 

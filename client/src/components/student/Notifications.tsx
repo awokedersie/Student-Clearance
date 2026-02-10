@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import StudentLayout from './StudentLayout';
+import Loading from '../common/Loading';
 
 const Notifications: React.FC = () => {
     const [user, setUser] = useState<any>(null);
@@ -33,13 +34,7 @@ const Notifications: React.FC = () => {
     }, [navigate]);
 
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50/50 backdrop-blur-sm">
-                <div className="relative">
-                    <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-                </div>
-            </div>
-        );
+        return <Loading />;
     }
 
     return (

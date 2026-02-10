@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import StudentLayout from './StudentLayout';
+import Loading from '../common/Loading';
 
 const StudentProfile: React.FC = () => {
     const [user, setUser] = useState<any>(null);
@@ -139,11 +140,7 @@ const StudentProfile: React.FC = () => {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-            </div>
-        );
+        return <Loading />;
     }
 
     return (

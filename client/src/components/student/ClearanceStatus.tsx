@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import StudentLayout from './StudentLayout';
+import Loading from '../common/Loading';
 
 const ClearanceStatus: React.FC = () => {
     const [user, setUser] = useState<any>(null);
@@ -31,11 +32,7 @@ const ClearanceStatus: React.FC = () => {
     }, [navigate]);
 
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-[#fcfdfe]">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-            </div>
-        );
+        return <Loading />;
     }
 
     return (
@@ -61,12 +58,19 @@ const ClearanceStatus: React.FC = () => {
                             <p className="text-gray-500 mt-2 max-w-sm mx-auto font-medium leading-relaxed">
                                 You have not submitted a clearance request for this academic year.
                             </p>
-                            <Link
-                                to="/student/clearance-request"
-                                className="mt-8 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20"
-                            >
-                                Submit Request Now
-                            </Link>
+                            {data?.isSystemOpen ? (
+                                <Link
+                                    to="/student/clearance-request"
+                                    className="mt-8 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20"
+                                >
+                                    Submit Request Now
+                                </Link>
+                            ) : (
+                                <div className="mt-8 inline-flex items-center gap-2 bg-gray-100 text-gray-400 px-8 py-3 rounded-xl font-bold border border-gray-200 cursor-not-allowed">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                    System Locked
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="w-full">

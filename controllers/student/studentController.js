@@ -95,10 +95,11 @@ exports.getDashboardData = async (req, res) => {
         const db = req.db;
         const studentId = req.session.user.student_id;
 
-        // Get current academic year
+        // Get current academic year from settings
+        const [settingsRows] = await db.execute("SELECT academic_year FROM clearance_settings ORDER BY id DESC LIMIT 1");
         const currentYear = new Date().getFullYear();
         const nextYear = currentYear + 1;
-        const academicYear = `${currentYear}-${nextYear}`;
+        const academicYear = settingsRows[0]?.academic_year || `${currentYear}-${nextYear}`;
 
         // Get latest student status from DB
         const [students] = await db.execute(
@@ -108,38 +109,57 @@ exports.getDashboardData = async (req, res) => {
 
         const status = students.length > 0 ? students[0].status : 'inactive';
 
-        // Get system status and remaining days
-        let systemStatus = 'Inactive';
+        // Get system settings (Fetch the single latest configuration)
+        let systemStatus = 'System Inactive';
         let daysRemaining = 0;
         let hoursRemaining = 0;
+        let activeAcademicYear = academicYear;
 
         try {
-            const [settings] = await db.execute(
-                "SELECT * FROM clearance_settings WHERE academic_year = ? OR academic_year = ? ORDER BY id DESC LIMIT 1",
-                [academicYear, `${currentYear - 1}-${currentYear}`]
-            );
+            // Get the absolute latest settings regardless of year to determine state
+            const [allSettings] = await db.execute("SELECT * FROM clearance_settings ORDER BY id DESC LIMIT 1");
 
-            if (settings.length > 0) {
-                const setting = settings[0];
+            if (allSettings.length > 0) {
+                const setting = allSettings[0];
+                activeAcademicYear = setting.academic_year.trim();
                 const now = new Date();
-                const end = new Date(setting.end_date);
                 const start = new Date(setting.start_date);
+                const end = new Date(setting.end_date);
 
-                if (setting.is_active && now >= start && now <= end) {
-                    systemStatus = 'Clearance Open';
-                    const diffTime = end.getTime() - now.getTime();
-                    daysRemaining = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                    hoursRemaining = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                } else if (!setting.is_active) {
+                if (setting.is_active) {
+                    if (now >= start && now <= end) {
+                        systemStatus = 'Clearance Open';
+                        const diffTime = end.getTime() - now.getTime();
+                        daysRemaining = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+                        hoursRemaining = Math.max(0, Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
+                    } else if (now < start) {
+                        systemStatus = 'Clearance Scheduled';
+                        const diffTime = start.getTime() - now.getTime();
+                        daysRemaining = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+                        hoursRemaining = Math.max(0, Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
+                    } else {
+                        systemStatus = 'Clearance Expired';
+                    }
+                } else {
                     systemStatus = 'System Inactive';
-                } else if (now > end) {
-                    systemStatus = 'Clearance Expired';
-                } else if (now < start) {
-                    systemStatus = 'Clearance Scheduled';
                 }
             }
         } catch (err) {
             console.error('Error fetching system settings:', err);
+        }
+
+        // Calculate clearance progress percentage (5 mandatory departments)
+        let progressPercentage = 0;
+        try {
+            const [progressRows] = await db.execute(
+                "SELECT COUNT(*) as approved_count FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND status = 'approved' AND target_department != 'finance'",
+                [studentId, activeAcademicYear]
+            );
+            const approvedCount = progressRows[0]?.approved_count || 0;
+            const totalRequired = 5; // library, cafeteria, dormitory, department, registrar
+            progressPercentage = Math.min(100, Math.round((approvedCount / totalRequired) * 100));
+        } catch (err) {
+            console.error('Error calculating progress:', err);
         }
 
         res.json({
@@ -152,6 +172,7 @@ exports.getDashboardData = async (req, res) => {
             daysRemaining,
             hoursRemaining: hoursRemaining || 0,
             academicYear: academicYear,
+            progressPercentage,
             title: 'Student Dashboard'
         });
     } catch (error) {
@@ -483,13 +504,31 @@ exports.getClearanceStatusData = async (req, res) => {
             });
         });
 
+        // Check system status
+        let isSystemOpen = false;
+        try {
+            const [allSettings] = await db.execute("SELECT * FROM clearance_settings ORDER BY id DESC LIMIT 1");
+            if (allSettings.length > 0) {
+                const setting = allSettings[0];
+                const now = new Date();
+                const start = new Date(setting.start_date);
+                const end = new Date(setting.end_date);
+                if (setting.is_active && now >= start && now <= end) {
+                    isSystemOpen = true;
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching system settings in status view:', err);
+        }
+
         res.json({
             success: true,
             user: req.session.user,
             title: 'My Clearance Status',
             currentAcademicYear: currentAcademicYear,
             clearances: allClearances,
-            hasRequests: hasRequests
+            hasRequests: hasRequests,
+            isSystemOpen: isSystemOpen
         });
 
     } catch (error) {

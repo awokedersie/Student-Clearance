@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import StudentLayout from './StudentLayout';
+import Loading from '../common/Loading';
 
 const ClearanceRequest: React.FC = () => {
     const [user, setUser] = useState<any>(null);
@@ -66,11 +67,7 @@ const ClearanceRequest: React.FC = () => {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-            </div>
-        );
+        return <Loading />;
     }
 
     return (
@@ -139,7 +136,7 @@ const ClearanceRequest: React.FC = () => {
                                 <textarea
                                     value={reason}
                                     onChange={(e) => setReason(e.target.value)}
-                                    placeholder="Explain why you are requesting clearance (e.g., Graduation, Transfer, Completion of Study...)"
+                                    placeholder="Explain why you are requesting clearance"
                                     className="request-textarea"
                                     rows={4}
                                     required

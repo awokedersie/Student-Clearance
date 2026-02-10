@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import AdminLayout from './AdminLayout';
+import Loading from '../common/Loading';
 
 interface AuditLog {
     id: number;
@@ -63,14 +64,7 @@ const AuditLogs: React.FC = () => {
     };
 
     if (loading && !data) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="p-20 text-center">
-                    <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-500 font-black uppercase tracking-widest text-[10px]">Loading Audit Logs...</p>
-                </div>
-            </div>
-        );
+        return <Loading />;
     }
 
     const { logs = [], user, pagination = { page: 1, limit: 50, total: 0, pages: 1 } } = data || {};

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import AdminLayout from './AdminLayout';
+import Loading from '../common/Loading';
 import ConfirmModal from '../common/ConfirmModal';
 
 interface Student {
@@ -259,7 +260,7 @@ const ManageStudents: React.FC = () => {
         setShowForm(true);
     };
 
-    if (loading && students.length === 0) return <div className="p-8 text-center text-gray-500 font-medium animate-pulse">Loading Students...</div>;
+    if (loading && students.length === 0) return <Loading />;
 
     return (
         <AdminLayout user={currentUser}>

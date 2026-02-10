@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import StudentLayout from '../student/StudentLayout';
 import AdminLayout from '../admin/AdminLayout';
+import Loading from './Loading';
 
 const ChangePassword: React.FC = () => {
     const [user, setUser] = useState<any>(null);
@@ -75,14 +76,7 @@ const ChangePassword: React.FC = () => {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50/50 backdrop-blur-sm">
-                <div className="relative">
-                    <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-indigo-600 uppercase tracking-tighter">DBU</div>
-                </div>
-            </div>
-        );
+        return <Loading />;
     }
 
     const isAdmin = user?.role && user.role !== 'student';

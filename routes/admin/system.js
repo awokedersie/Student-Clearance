@@ -40,5 +40,4 @@ router.post('/system/manage-students/bulk-actions', requireSystemAdmin, systemCo
 // Audit Logs (Accessible by System Admin & Registrar)
 router.get('/system/audit-logs/data', requireSystemAdmin, systemController.getAuditLogs);
 
-
 module.exports = router;

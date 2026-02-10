@@ -93,7 +93,19 @@
 }
 
 .sidebar-header {
-    @apply p-6 text-2xl font-black tracking-tighter border-b border-indigo-800 flex items-center justify-between;
+    @apply p-6 text-xl font-black tracking-tighter border-b border-indigo-800 flex items-center justify-between;
+}
+
+.sidebar-logo-container {
+    @apply w-12 h-12 bg-white rounded-2xl p-1.5 shadow-lg shadow-black/30 flex items-center justify-center overflow-hidden border border-white/10;
+}
+
+.sidebar-title-text {
+    @apply flex flex-col leading-tight;
+}
+
+.sidebar-title-accent {
+    @apply text-indigo-400 font-light italic text-xs tracking-widest uppercase;
 }
 
 .sidebar-nav {
@@ -167,7 +179,9 @@
 }
 
 .welcome-card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6;
+    @apply bg-white rounded-3xl p-4 md:p-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6;
+    box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.7);
 }
 
 .welcome-title {
@@ -187,7 +201,7 @@
 }
 
 .status-badge-container {
-    @apply flex-1 xl:flex-none text-center px-4 md:px-6 py-2 md:py-3 rounded-2xl border;
+    @apply text-center px-4 py-1.5 rounded-xl border;
 }
 
 .status-label {
@@ -203,7 +217,7 @@
 }
 
 .year-badge-container {
-    @apply flex-1 xl:flex-none text-center px-4 md:px-6 py-2 md:py-3 bg-indigo-50 rounded-2xl border border-indigo-100;
+    @apply text-center px-4 py-1.5 bg-indigo-50 rounded-xl border border-indigo-100;
 }
 
 .quick-links-grid {
@@ -211,15 +225,31 @@
 }
 
 .nav-card {
-    @apply bg-white rounded-[24px] md:rounded-[32px] p-5 md:p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden relative;
+    @apply bg-white rounded-[24px] md:rounded-[32px] p-5 md:p-8 border border-gray-50/50 transition-all duration-500 overflow-hidden relative;
+    box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.05);
+}
+
+.nav-card:hover {
+    box-shadow: 0 30px 60px -15px rgba(79, 70, 229, 0.08);
+    transform: translateY(-8px);
+    border-color: rgba(79, 70, 229, 0.1);
 }
 
 .nav-card-bg-icon {
-    @apply absolute top-0 right-0 p-4 opacity-5 transition-opacity hidden md:block scale-[2.5] transform rotate-12;
+    @apply absolute top-0 right-0 p-4 opacity-[0.03] transition-all duration-700 hidden md:block scale-[2.5] transform rotate-12;
+}
+
+.nav-card:hover .nav-card-bg-icon {
+    @apply opacity-[0.08] rotate-0 scale-[3];
 }
 
 .nav-card-icon-wrapper {
-    @apply w-12 h-12 md:w-16 md:h-16 rounded-[16px] md:rounded-[20px] bg-gray-50 flex items-center justify-center mb-4 md:mb-6 transition-colors shadow-inner;
+    @apply w-12 h-12 md:w-16 md:h-16 rounded-[16px] md:rounded-[24px] bg-gray-50 flex items-center justify-center mb-4 md:mb-6 transition-all duration-500 shadow-inner border border-transparent;
+}
+
+.nav-card:hover .nav-card-icon-wrapper {
+    @apply transform scale-110;
+    box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.2);
 }
 
 .nav-card-title {
@@ -239,7 +269,8 @@
 }
 
 .important-info-card {
-    @apply lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8;
+    @apply lg:col-span-2 bg-white rounded-[32px] p-6 md:p-8 border border-gray-50;
+    box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.04);
 }
 
 .section-title {
@@ -247,7 +278,13 @@
 }
 
 .alert-item {
-    @apply p-4 md:p-6 rounded-[24px] md:rounded-[28px] border flex flex-col sm:flex-row gap-4 md:gap-5 transition-transform hover:scale-[1.01];
+    @apply p-4 md:p-6 rounded-[28px] border flex flex-col sm:flex-row gap-4 md:gap-5 transition-all duration-300;
+    box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.02);
+}
+
+.alert-item:hover {
+    transform: translateX(5px) scale(1.01);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
 }
 
 .alert-icon-wrapper {
@@ -255,7 +292,14 @@
 }
 
 .system-status-sidebar {
-    @apply bg-indigo-900 rounded-3xl shadow-xl p-6 md:p-8 text-white flex flex-col justify-between;
+    @apply bg-indigo-900 rounded-[32px] p-6 md:p-8 text-white flex flex-col justify-between transition-all duration-500;
+    box-shadow: 0 25px 60px -15px rgba(30, 27, 75, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.system-status-sidebar:hover {
+    box-shadow: 0 30px 70px -10px rgba(30, 27, 75, 0.6);
+    transform: scale(1.01);
 }
 
 .sidebar-stat-label {

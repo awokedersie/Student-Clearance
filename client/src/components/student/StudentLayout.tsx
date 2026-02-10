@@ -67,9 +67,14 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
             {/* Sidebar */}
             <aside className={`sidebar-container ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
                 <div className="sidebar-header">
-                    <span>
-                        DBU <span className="text-indigo-400 font-light italic">Clearance</span>
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <div className="sidebar-logo-container">
+                            <img src="/logo.png" alt="DBU Logo" className="w-full h-full object-contain" />
+                        </div>
+                        <span className="sidebar-title-text">
+                            DBU <span className="sidebar-title-accent">Clearance</span>
+                        </span>
+                    </div>
                     <button
                         className="lg:hidden text-indigo-300 hover:text-white"
                         onClick={() => setIsSidebarOpen(false)}
@@ -127,7 +132,16 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
                             </svg>
                         </button>
                         <h2 className="topbar-title">
-                            {menuItems.find(m => m.path === location.pathname)?.name || 'Student Area'}
+                            {location.pathname === '/student/dashboard' ? (
+                                <>
+                                    <span className="font-medium text-gray-600">Welcome </span>
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                                        {user?.name} {user?.lastName || user?.last_name}
+                                    </span>
+                                </>
+                            ) : (
+                                menuItems.find(m => m.path === location.pathname)?.name || 'Student Area'
+                            )}
                         </h2>
                     </div>
 

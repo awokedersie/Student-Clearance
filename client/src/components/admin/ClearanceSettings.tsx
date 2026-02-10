@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AdminLayout from './AdminLayout';
+import Loading from '../common/Loading';
 
 const ClearanceSettings: React.FC = () => {
     const [data, setData] = useState<any>(null);
@@ -60,7 +61,7 @@ const ClearanceSettings: React.FC = () => {
         }
     };
 
-    if (loading && !data) return <div className="p-8 text-center text-gray-500 font-medium italic animate-pulse">🔒 Initialising Clearance Engine...</div>;
+    if (loading && !data) return <Loading />;
     if (!data) return (
         <div className="min-h-[400px] flex items-center justify-center">
             <div className="text-center p-12 bg-red-50 rounded-[40px] border border-red-100 max-w-md">

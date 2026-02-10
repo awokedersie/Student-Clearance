@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import AdminLayout from './AdminLayout';
 import { Link, useNavigate } from 'react-router-dom';
+import Loading from '../common/Loading';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const SystemDashboard: React.FC = () => {
@@ -30,14 +31,7 @@ const SystemDashboard: React.FC = () => {
         fetchStats();
     }, [navigate]);
 
-    if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-gray-500 font-bold animate-pulse uppercase tracking-widest text-xs">Initialising Analytics...</p>
-            </div>
-        </div>
-    );
+    if (loading) return <Loading />;
 
     if (!data) return <div className="p-8 text-center text-red-500 font-bold">Failed to load system data</div>;
 
