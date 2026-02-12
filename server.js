@@ -35,6 +35,10 @@ const limiter = rateLimit({
     message: { success: false, message: 'Too many requests, please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
+    // Fix for Render/Proxy: Ensure we get the real IP
+    keyGenerator: (req) => {
+        return req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
+    }
 });
 
 // Apply rate limiter ONLY to POST (login attempts), allowing GET (page loads) to stay responsive
