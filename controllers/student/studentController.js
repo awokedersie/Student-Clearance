@@ -938,7 +938,7 @@ exports.downloadCertificate = async (req, res) => {
         const depts = [
             { id: 'department', label: 'Department Head' },
             { id: 'library', label: 'Library' },
-            { id: 'dormitory', label: 'Proctor' },
+            { id: 'dormitory', label: 'Dormitory' },
             { id: 'cafeteria', label: 'Cafeteria' },
             { id: 'registrar', label: 'Registrar' }
         ];
@@ -954,7 +954,7 @@ exports.downloadCertificate = async (req, res) => {
 
             // Replaced '✔' with text '(Cleared)' to avoid encoding issues
             doc.setTextColor(0, 100, 0);
-            doc.text("(Cleared)", 160, yPos);
+            doc.text("(Approved)", 160, yPos);
             doc.setTextColor(0);
         });
 
