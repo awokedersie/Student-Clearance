@@ -99,7 +99,13 @@ exports.verifyExit = async (req, res) => {
                 `${req.session.user.name} ${req.session.user.lastName}`,
                 req.session.user.role,
                 student_id,
-                req.ip || req.connection.remoteAddress
+                (() => {
+                    let clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || req.connection?.remoteAddress;
+                    if (clientIp && clientIp.includes('::ffff:')) {
+                        clientIp = clientIp.replace('::ffff:', '');
+                    }
+                    return clientIp;
+                })()
             ]
         );
 

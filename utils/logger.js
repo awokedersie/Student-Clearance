@@ -16,7 +16,10 @@ const logger = {
                 return;
             }
 
-            const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            let ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || req.connection?.remoteAddress;
+            if (ip && ip.includes('::ffff:')) {
+                ip = ip.replace('::ffff:', '');
+            }
 
             await db.execute(
                 `INSERT INTO audit_logs (admin_id, admin_name, admin_role, action, target_student_id, target_student_name, details, ip_address) 
