@@ -16,8 +16,8 @@ const logger = {
                 return;
             }
 
-            const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
+            // Get the real client IP from the first entry of x-forwarded-for or fallback to req.ip
+            let ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection.remoteAddress;
             await db.execute(
                 `INSERT INTO audit_logs (admin_id, admin_name, admin_role, action, target_student_id, target_student_name, details, ip_address) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,

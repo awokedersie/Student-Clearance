@@ -99,7 +99,7 @@ exports.verifyExit = async (req, res) => {
                 `${req.session.user.name} ${req.session.user.lastName}`,
                 req.session.user.role,
                 student_id,
-                req.ip || req.connection.remoteAddress
+                req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection.remoteAddress
             ]
         );
 
