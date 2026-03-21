@@ -112,27 +112,27 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static('public'));
 
 // ==================== SPA NAVIGATION HANDLER ====================
-// Standard React SPA handler: Serves index.html for all non-file GET requests
-app.get('*', (req, res) => {
-    // 1. Only handle GET requests for potential page navigations
-    // We skip if path has a dot (static file) or is a reserved backend path
-    const isNavigation = 
-        req.method === 'GET' && 
-        !req.path.includes('.') && 
-        !req.path.includes('/logout') && 
-        !req.path.includes('/download-certificate') &&
-        !req.path.includes('/forgot-password-data'); // Safety check
+// Handle student/admin page refreshes by serving index.html for non-API GET requests
+app.get('*', (req, res, next) => {
+    // 1. Skip if not a GET request
+    if (req.method !== 'GET') return next();
 
-    if (isNavigation) {
-        return res.sendFile(path.resolve(__dirname, 'client/dist/index.html'), (err) => {
-            if (err) {
-                console.error('SPA Navigation Error:', err);
-                res.status(500).send('Internal Server Error');
-            }
-        });
+    // 2. Skip if it's an XHR/JSON request (API call)
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+        return res.status(404).json({ success: false, message: 'API Route not found' });
     }
 
-    // 2. Default 404 for actual missing API routes or files
+    // 3. Skip if it's a static file (has a dot) or a specific backend route
+    const isStaticOrBackend = 
+        req.path.includes('.') || 
+        req.path.includes('/logout') || 
+        req.path.includes('/download-certificate');
+
+    if (!isStaticOrBackend) {
+        return res.sendFile(path.join(__dirname, 'client/dist/index.html'));
+    }
+
+    // 4. Fallback for actually missing files or backend routes
     res.status(404).send('Not Found');
 });
 
