@@ -43,16 +43,14 @@ const Login: React.FC = () => {
             <div className="login-content">
                 {/* Login Container */}
                 <div className="login-card">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
-
                     <div className="relative z-10">
-                        {/* Logo/Identity Area - Now Inside Container */}
+                        {/* Logo/Identity Area */}
                         <div className="text-center mb-10">
                             <div className="logo-container">
-                                <img src="/logo.png" className="w-full h-full object-contain p-2" alt="DBU Logo" />
+                                <img src="/logo.png" className="w-full h-full object-contain p-4" alt="DBU Logo" />
                             </div>
                             <h1 className="login-title">
-                                STUDENT <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">PORTAL</span>
+                                STUDENT <span className="portal-accent">PORTAL</span>
                             </h1>
                             <p className="login-subtitle">Debre Berhan University</p>
                         </div>
@@ -64,25 +62,33 @@ const Login: React.FC = () => {
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="form-label">Student Username</label>
+                            <div className="space-y-1">
+                                <label className="form-label">Username</label>
                                 <div className="input-wrapper">
-                                    <span className="input-icon">👤</span>
+                                    <span className="input-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                        </svg>
+                                    </span>
                                     <input
                                         type="text"
                                         value={username}
                                         onChange={(e) => setUsername(e.target.value)}
-                                        placeholder="Enter your username"
+                                        placeholder="Enter your student ID"
                                         className="input-field"
                                         required
                                     />
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="form-label">Password</label>
+                            <div className="space-y-1">
+                                <label className="form-label">Credentials</label>
                                 <div className="input-wrapper relative">
-                                    <span className="input-icon">🔑</span>
+                                    <span className="input-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                        </svg>
+                                    </span>
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         value={password}
@@ -94,7 +100,7 @@ const Login: React.FC = () => {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors focus:outline-none"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-blue-400 transition-colors focus:outline-none"
                                         title={showPassword ? "Hide password" : "Show password"}
                                     >
                                         {showPassword ? (
@@ -111,47 +117,51 @@ const Login: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between pt-2">
+                            <div className="flex flex-col gap-6 pt-4">
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="submit-button !w-auto !mt-0 px-8 min-w-[140px]"
+                                    className="submit-button"
                                 >
                                     {loading ? (
-                                        <>
-                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                            <span>...</span>
-                                        </>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                     ) : (
                                         <>
-                                            <span>Login</span>
-                                            <span className="transition-transform group-hover:translate-x-1">⟶</span>
+                                            <span>Authorize Access</span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 transition-transform group-hover:translate-x-1">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                                            </svg>
                                         </>
                                     )}
                                 </button>
 
-                                <Link
-                                    to="/forgot-password"
-                                    className="text-sm font-bold text-indigo-400 hover:text-indigo-300 transition-all tracking-wide underline decoration-indigo-400/30 underline-offset-4 hover:decoration-indigo-300 hover:scale-105 transform inline-block"
-                                >
-                                    Forgot Password?
-                                </Link>
+                                <div className="flex items-center justify-center">
+                                    <Link
+                                        to="/forgot-password"
+                                        className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-400/80 hover:text-indigo-300 transition-all underline underline-offset-8 decoration-indigo-500/20"
+                                    >
+                                        Lost credentials?
+                                    </Link>
+                                </div>
                             </div>
                         </form>
 
-                        <div className="mt-8 pt-8 border-t border-white/5 text-center">
+                        <div className="mt-12 pt-8 border-t border-white/5 text-center">
                             <Link
                                 to="/admin/login"
-                                className="footer-link"
+                                className="footer-link group"
                             >
-                                <span>👨‍💼</span> Staff Access?
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
+                                </svg>
+                                <span>Institutional Staff Access</span>
                             </Link>
                         </div>
                     </div>
                 </div>
 
                 <p className="copyright-text">
-                    © 2025 DEBRE BERHAN UNIVERSITY
+                    &copy; 2025 Debre Berhan University · Student Clearance Authority
                 </p>
             </div>
         </div>
@@ -159,5 +169,6 @@ const Login: React.FC = () => {
 };
 
 export default Login;
+
 
 

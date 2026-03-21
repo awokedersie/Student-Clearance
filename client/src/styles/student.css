@@ -21,69 +21,112 @@
 
 /* --- Refactored Login Page Styles --- */
 
+/* --- Premium Student Login Page Styles --- */
+
 .login-page {
-    @apply min-h-screen bg-gradient-to-br from-indigo-900 via-blue-900 to-black flex items-center justify-center p-6 font-sans relative overflow-hidden;
+    @apply min-h-screen bg-[#0a0c14] flex items-center justify-center p-6 font-sans relative overflow-hidden;
+    background-image: 
+        radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(37, 99, 235, 0.15) 0%, transparent 50%);
 }
 
 .bg-decorative-1 {
-    @apply absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse;
+    @apply absolute top-[-15%] left-[-15%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[160px] animate-pulse;
 }
 
 .bg-decorative-2 {
-    @apply absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] animate-pulse delay-700;
+    @apply absolute bottom-[-15%] right-[-15%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[160px] animate-pulse delay-1000;
 }
 
 .login-content {
-    @apply max-w-md w-full relative z-10 duration-700;
+    @apply max-w-md w-full relative z-10;
 }
 
 .logo-container {
-    @apply inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-[32px] shadow-2xl shadow-indigo-500/20 text-5xl mx-auto mb-6 transform hover:scale-110 hover:rotate-3 transition-all duration-500 border-4 border-white/10 backdrop-blur-xl;
+    @apply inline-flex items-center justify-center w-24 h-24 bg-white/5 rounded-[40px] shadow-2xl mx-auto mb-8 transform transition-all duration-700 border border-white/10 backdrop-blur-3xl overflow-hidden relative;
+}
+
+.logo-container::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-tr from-indigo-500/20 to-blue-500/20 opacity-0 transition-opacity duration-700;
+}
+
+.logo-container:hover {
+    @apply scale-110 -rotate-3 border-indigo-500/30;
+}
+
+.logo-container:hover::before {
+    @apply opacity-100;
 }
 
 .login-title {
-    @apply text-3xl font-black text-white tracking-tighter uppercase italic leading-none;
+    @apply text-4xl font-black text-white tracking-tighter uppercase leading-none;
+}
+
+.portal-accent {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400;
+    text-shadow: 0 0 30px rgba(96, 165, 250, 0.3);
 }
 
 .login-subtitle {
-    @apply text-indigo-200/60 mt-2 font-medium;
+    @apply text-indigo-200/40 mt-3 font-semibold tracking-[0.2em] uppercase text-[10px];
 }
 
 .login-card {
-    @apply bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 p-10 relative overflow-hidden;
-    box-shadow: 0 32px 64px -16px rgba(0, 0, 0, 0.5);
+    @apply bg-[#111420]/60 backdrop-blur-3xl rounded-[40px] border border-white/5 p-10 relative overflow-hidden;
+    box-shadow: 
+        0 40px 100px -20px rgba(0, 0, 0, 0.7),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.login-card::after {
+    content: '';
+    @apply absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-50;
 }
 
 .error-message {
-    @apply mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-300 text-sm font-medium text-center backdrop-blur-md;
+    @apply mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-300 text-xs font-bold text-center backdrop-blur-xl animate-in fade-in slide-in-from-top-2;
 }
 
 .form-label {
-    @apply block text-xs font-black text-indigo-200 uppercase tracking-widest px-1 opacity-70;
+    @apply block text-[10px] font-black text-indigo-200/50 uppercase tracking-[0.15em] mb-3 ml-1;
 }
 
 .input-wrapper {
-    @apply relative;
+    @apply relative group;
 }
 
 .input-icon {
-    @apply absolute left-5 top-1/2 -translate-y-1/2 text-xl opacity-40 transition-opacity;
+    @apply absolute left-5 top-1/2 -translate-y-1/2 text-lg text-white/20 transition-all duration-300 group-focus-within:text-blue-400 group-focus-within:scale-110;
 }
 
 .input-field {
-    @apply w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-5 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-white/20;
+    @apply w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-14 pr-6 py-4.5 text-white font-semibold transition-all duration-300 placeholder:text-white/10;
+}
+
+.input-field:focus {
+    @apply outline-none bg-white/[0.06] border-blue-500/30 ring-4 ring-blue-500/10;
 }
 
 .submit-button {
-    @apply w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-500/20 transform active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4 tracking-widest uppercase flex items-center justify-center gap-2;
+    @apply w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white font-black py-5 rounded-2xl shadow-2xl shadow-blue-500/20 transform active:scale-95 transition-all duration-300 mt-6 tracking-widest uppercase flex items-center justify-center gap-3 relative overflow-hidden;
+}
+
+.submit-button::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full transition-transform duration-1000;
+}
+
+.submit-button:hover::before {
+    @apply translate-x-full;
 }
 
 .footer-link {
-    @apply text-indigo-400 hover:text-white text-sm font-bold transition-all flex items-center justify-center gap-2 mx-auto decoration-2 underline-offset-4 hover:underline;
+    @apply text-indigo-400/60 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-2 mx-auto decoration-2 underline-offset-4 hover:underline;
 }
 
 .copyright-text {
-    @apply text-[10px] font-black text-white/20 uppercase tracking-[6px] italic mt-12 text-center;
+    @apply text-[9px] font-black text-white/10 uppercase tracking-[0.8em] mt-16 text-center leading-loose;
 }
 
 /* --- StudentLayout.tsx --- */
