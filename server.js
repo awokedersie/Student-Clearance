@@ -114,24 +114,25 @@ app.use(express.static('public'));
 // ==================== SPA NAVIGATION HANDLER ====================
 // Handle student/admin page refreshes by serving index.html for non-API GET requests
 app.get('*', (req, res) => {
-    // If it's a browser navigation (GET + Accept: text/html)
-    // AND it's not a known backend document/action route
-    if (req.method === 'GET' &&
-        req.headers.accept?.includes('text/html') &&
-        !req.xhr &&
-        !req.path.includes('.') &&
-        !req.path.includes('/logout') &&
-        !req.path.includes('/download-certificate')) {
+    // 1. Skip if not a GET request
+    if (req.method !== 'GET') return next();
+
+    // 2. Skip if it's an XHR/JSON request (API call)
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+        return res.status(404).json({ success: false, message: 'API Route not found' });
+    }
+
+    // 3. Skip if it's a static file (has a dot) or a specific backend route
+    const isStaticOrBackend = 
+        req.path.includes('.') || 
+        req.path.includes('/logout') || 
+        req.path.includes('/download-certificate');
+
+    if (!isStaticOrBackend) {
         return res.sendFile(path.join(__dirname, 'client/dist/index.html'));
     }
 
-    // Default 404 for actual missing resources or API endpoints
-    if (req.xhr || req.headers.accept?.includes('application/json')) {
-        console.log(`[404 API] ${req.method} ${req.url} - Not Found`);
-        return res.status(404).json({ success: false, message: 'Route not found' });
-    }
-
-    console.log(`[404 PAGE] ${req.method} ${req.url} - Not Found`);
+    // 4. Fallback for actually missing files or backend routes
     res.status(404).send('Not Found');
 });
 
