@@ -46,13 +46,13 @@ const Login: React.FC = () => {
                     <div className="relative z-10">
                         {/* Logo/Identity Area */}
                         <div className="text-center mb-10">
-                            <div className="logo-container bg-white">
-                                <img src="/dbu-logo.png" className="w-full h-full object-contain p-4" alt="DBU Logo" />
+                            <div className="logo-container">
+                                <img src="/logo.png" className="w-full h-full object-contain p-4" alt="DBU Logo" />
                             </div>
                             <h1 className="login-title">
-                                STUDENT <span className="portal-accent text-dbu-gold">PORTAL</span>
+                                STUDENT <span className="portal-accent">PORTAL</span>
                             </h1>
-                            <p className="login-subtitle text-white/40">Debre Berhan University</p>
+                            <p className="login-subtitle">Debre Berhan University</p>
                         </div>
 
                         {error && (
@@ -138,7 +138,7 @@ const Login: React.FC = () => {
                                 <div className="flex items-center justify-center">
                                     <Link
                                         to="/forgot-password"
-                                        className="text-[11px] font-black uppercase tracking-[0.2em] text-dbu-gold/80 hover:text-dbu-gold transition-all underline underline-offset-8 decoration-dbu-gold/20"
+                                        className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-400/80 hover:text-indigo-300 transition-all underline underline-offset-8 decoration-indigo-500/20"
                                     >
                                         Lost credentials?
                                     </Link>

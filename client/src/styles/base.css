@@ -1,5 +1,9 @@
 @import "tailwindcss";
-@import "./vars.css";
+
+:root {
+  --primary-indigo: #4f46e5;
+  --primary-blue: #2563eb;
+}
 
 body {
   margin: 0;

@@ -58,14 +58,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
             {/* Sidebar */}
             <aside className={`admin-sidebar ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
                 <div className="admin-sidebar-header">
-                    <div className="flex items-center gap-3">
-                        <img src="/dbu-logo.png" alt="DBU Logo" className="w-8 h-8 object-contain" />
-                        <span className="text-white">
-                            DBU <span className="text-dbu-gold font-light italic">Clearance</span>
-                        </span>
-                    </div>
+                    <span>
+                        DBU <span className="text-indigo-400 font-light italic">Clearance</span>
+                    </span>
                     <button
-                        className="lg:hidden text-dbu-gold hover:text-white"
+                        className="lg:hidden text-indigo-300 hover:text-white"
                         onClick={() => setIsSidebarOpen(false)}
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

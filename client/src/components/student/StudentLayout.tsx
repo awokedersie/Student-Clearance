@@ -68,15 +68,15 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
             <aside className={`sidebar-container ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
                 <div className="sidebar-header">
                     <div className="flex items-center gap-3">
-                        <div className="sidebar-logo-container bg-white">
-                            <img src="/dbu-logo.png" alt="DBU Logo" className="w-full h-full object-contain" />
+                        <div className="sidebar-logo-container">
+                            <img src="/logo.png" alt="DBU Logo" className="w-full h-full object-contain" />
                         </div>
-                        <span className="sidebar-title-text text-white">
-                            DBU <span className="sidebar-title-accent text-dbu-gold">Clearance</span>
+                        <span className="sidebar-title-text">
+                            DBU <span className="sidebar-title-accent">Clearance</span>
                         </span>
                     </div>
                     <button
-                        className="lg:hidden text-dbu-gold hover:text-white"
+                        className="lg:hidden text-indigo-300 hover:text-white"
                         onClick={() => setIsSidebarOpen(false)}
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,7 +135,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
                             {location.pathname === '/student/dashboard' ? (
                                 <>
                                     <span className="font-medium text-gray-600">Welcome </span>
-                                    <span className="text-dbu-navy">
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
                                         {user?.name} {user?.lastName || user?.last_name}
                                     </span>
                                 </>
@@ -161,7 +161,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
                         <div className="topbar-profile">
                             <div className="text-right hidden sm:block">
                                 <p className="text-xs md:text-sm font-bold text-gray-900 truncate max-w-[100px]">{user?.name} {user?.last_name}</p>
-                                <p className="text-[10px] md:text-xs text-dbu-blue font-mono font-medium">{user?.student_id}</p>
+                                <p className="text-[10px] md:text-xs text-blue-600 font-mono font-medium">{user?.student_id}</p>
                             </div>
                             <div className="profile-avatar-small">
                                 {user?.profile_picture ? (
