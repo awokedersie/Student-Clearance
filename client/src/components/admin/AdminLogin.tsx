@@ -36,17 +36,17 @@ const AdminLogin: React.FC = () => {
             <div className="admin-login-wrapper">
                 <div className="admin-login-card">
                     {/* Animated background decoration */}
-                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500 rounded-full blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                    <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500 rounded-full blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-dbu-navy rounded-full blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                    <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-dbu-gold rounded-full blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
 
                     <div className="admin-login-header">
-                        <div className="admin-logo-badge">
-                            <img src="/logo.png" className="w-full h-full object-contain p-2" alt="DBU Logo" />
+                        <div className="admin-logo-badge bg-white">
+                            <img src="/dbu-logo.png" className="w-full h-full object-contain p-2" alt="DBU Logo" />
                         </div>
                         <h1 className="admin-login-title">
-                            ADMIN <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">PORTAL</span>
+                            ADMIN <span className="text-dbu-gold">PORTAL</span>
                         </h1>
-                        <p className="admin-login-subtitle">Debre Berhan University</p>
+                        <p className="admin-login-subtitle text-white/60">Debre Berhan University</p>
                     </div>
 
                     {error && (
@@ -120,7 +120,7 @@ const AdminLogin: React.FC = () => {
                     <div className="mt-8 pt-8 border-t border-white/5 text-center">
                         <button
                             onClick={() => navigate('/login')}
-                            className="text-indigo-400 hover:text-white text-sm font-bold transition-all flex items-center justify-center gap-2 mx-auto decoration-2 underline-offset-4 hover:underline"
+                            className="text-dbu-gold hover:text-white text-sm font-bold transition-all flex items-center justify-center gap-2 mx-auto decoration-2 underline-offset-4 hover:underline"
                         >
                             <span>👩‍🎓</span> Student Access?
                         </button>
