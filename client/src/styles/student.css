@@ -97,11 +97,7 @@
 }
 
 .input-icon {
-    @apply absolute left-5 top-1/2 -translate-y-1/2 text-lg text-white/20 transition-all duration-300;
-}
-
-.input-wrapper:focus-within .input-icon {
-    @apply text-blue-400 scale-110;
+    @apply absolute left-5 top-1/2 -translate-y-1/2 text-lg text-white/20 transition-all duration-300 group-focus-within:text-blue-400 group-focus-within:scale-110;
 }
 
 .input-field {
