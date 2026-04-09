@@ -85,7 +85,7 @@
 }
 
 .error-message {
-    @apply mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-300 text-xs font-bold text-center backdrop-blur-xl animate-in fade-in slide-in-from-top-2;
+    @apply mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-300 text-xs font-bold text-center backdrop-blur-xl;
 }
 
 .form-label {
@@ -93,11 +93,15 @@
 }
 
 .input-wrapper {
-    @apply relative group;
+    @apply relative;
 }
 
 .input-icon {
-    @apply absolute left-5 top-1/2 -translate-y-1/2 text-lg text-white/20 transition-all duration-300 group-focus-within:text-blue-400 group-focus-within:scale-110;
+    @apply absolute left-5 top-1/2 -translate-y-1/2 text-lg text-white/20 transition-all duration-300;
+}
+
+.input-wrapper:focus-within .input-icon {
+    @apply text-blue-400 scale-110;
 }
 
 .input-field {
