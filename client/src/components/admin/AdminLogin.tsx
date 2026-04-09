@@ -82,7 +82,7 @@ const AdminLogin: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors focus:outline-none"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white opacity-70 hover:opacity-100 transition-opacity focus:outline-none"
                                     title={showPassword ? "Hide password" : "Show password"}
                                 >
                                     {showPassword ? (

@@ -24,8 +24,7 @@
 /* --- Exact Match Premium Student Login Page Styles --- */
 
 .login-page {
-    @apply min-h-screen flex flex-col items-center justify-center relative overflow-hidden font-sans;
-    background: linear-gradient(to bottom, #495a9b, #334076);
+    @apply min-h-screen flex flex-col items-center justify-center relative overflow-hidden font-sans bg-gradient-to-br from-indigo-900 via-blue-900 to-black;
 }
 
 /* Remove decorative backgrounds since the image doesn't have them */
