@@ -41,7 +41,7 @@ const Login: React.FC = () => {
                 <div className="login-title-container">
                     <div className="flex justify-center mb-4">
                         <div className="logo-container">
-                            <span className="text-[40px] leading-none mb-1">🎓</span>
+                            <img src="/logo.png" className="w-full h-full object-contain p-2" alt="DBU Logo" />
                         </div>
                     </div>
                     <h1 className="login-title">
@@ -116,6 +116,15 @@ const Login: React.FC = () => {
                         </Link>
                     </div>
                 </form>
+
+                <div className="mt-10 pt-8 border-t border-white/10 text-center">
+                    <button
+                        onClick={() => navigate('/admin/login')}
+                        className="text-[#8b9de3] hover:text-white text-sm font-[700] transition-all flex items-center justify-center gap-2 mx-auto decoration-2 underline-offset-4 hover:underline"
+                    >
+                        <span>🛡️</span> Institutional Staff Access
+                    </button>
+                </div>
             </div>
         </div>
     );
