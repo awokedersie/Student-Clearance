@@ -21,112 +21,86 @@
 
 /* --- Refactored Login Page Styles --- */
 
-/* --- Premium Student Login Page Styles --- */
+/* --- Exact Match Premium Student Login Page Styles --- */
 
 .login-page {
-    @apply min-h-screen bg-[#0a0c14] flex items-center justify-center p-6 font-sans relative overflow-hidden;
-    background-image: 
-        radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 70%, rgba(37, 99, 235, 0.15) 0%, transparent 50%);
+    @apply min-h-screen flex flex-col items-center justify-center relative overflow-hidden font-sans;
+    background: linear-gradient(to bottom, #495a9b, #334076);
 }
 
-.bg-decorative-1 {
-    @apply absolute top-[-15%] left-[-15%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[160px] animate-pulse;
-}
-
-.bg-decorative-2 {
-    @apply absolute bottom-[-15%] right-[-15%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[160px] animate-pulse delay-1000;
+/* Remove decorative backgrounds since the image doesn't have them */
+.bg-decorative-1, .bg-decorative-2 {
+    display: none;
 }
 
 .login-content {
-    @apply max-w-md w-full relative z-10;
-}
-
-.logo-container {
-    @apply inline-flex items-center justify-center w-24 h-24 bg-white/5 rounded-[40px] shadow-2xl mx-auto mb-8 transform transition-all duration-700 border border-white/10 backdrop-blur-3xl overflow-hidden relative;
-}
-
-.logo-container::before {
-    content: '';
-    @apply absolute inset-0 bg-gradient-to-tr from-indigo-500/20 to-blue-500/20 opacity-0 transition-opacity duration-700;
-}
-
-.logo-container:hover {
-    @apply scale-110 -rotate-3 border-indigo-500/30;
-}
-
-.logo-container:hover::before {
-    @apply opacity-100;
-}
-
-.login-title {
-    @apply text-4xl font-black text-white tracking-tighter uppercase leading-none;
-}
-
-.portal-accent {
-    @apply text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400;
-    text-shadow: 0 0 30px rgba(96, 165, 250, 0.3);
-}
-
-.login-subtitle {
-    @apply text-indigo-200/40 mt-3 font-semibold tracking-[0.2em] uppercase text-[10px];
+    @apply w-[440px] max-w-full px-6 relative z-10;
 }
 
 .login-card {
-    @apply bg-[#111420]/60 backdrop-blur-3xl rounded-[40px] border border-white/5 p-10 relative overflow-hidden;
-    box-shadow: 
-        0 40px 100px -20px rgba(0, 0, 0, 0.7),
-        inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+    @apply w-full flex flex-col items-center;
 }
 
-.login-card::after {
-    content: '';
-    @apply absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-50;
+.logo-container {
+    @apply w-[100px] h-[100px] bg-[#3e68ff] rounded-[35px] flex items-center justify-center mb-2 border-[3px] border-[#6b8fff] relative;
+    box-shadow: 0 0 45px rgba(62, 104, 255, 0.4), inset 0 0 30px rgba(255, 255, 255, 0.2);
+}
+
+.login-title-container {
+    @apply text-center mb-10;
+}
+
+.login-title {
+    @apply text-[34px] font-black text-white italic tracking-wider uppercase flex items-center justify-center gap-[6px] leading-none;
+}
+
+.portal-accent {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-[#59c3f5] to-[#1fd0a6] normal-case italic;
+}
+
+.login-subtitle {
+    @apply text-[#a3b1e3] mt-2.5 text-[15.5px] font-semibold tracking-[0.03em];
 }
 
 .error-message {
-    @apply mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-300 text-xs font-bold text-center backdrop-blur-xl;
+    @apply mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-300 text-xs font-bold text-center;
 }
 
 .form-label {
-    @apply block text-[10px] font-black text-indigo-200/50 uppercase tracking-[0.15em] mb-3 ml-1;
+    @apply block text-[11px] font-black text-[#a6b6ea] uppercase tracking-widest pl-1 mb-3;
 }
 
 .input-wrapper {
-    @apply relative;
+    @apply relative mb-1;
 }
 
 .input-icon {
-    @apply absolute left-5 top-1/2 -translate-y-1/2 text-lg text-white/20 transition-all duration-300 group-focus-within:text-blue-400 group-focus-within:scale-110;
+    @apply absolute left-[18px] top-1/2 -translate-y-1/2 transition-colors duration-300;
+    color: #6173b8;
+}
+
+.input-wrapper:focus-within .input-icon {
+    @apply text-[#bfa04d];
 }
 
 .input-field {
-    @apply w-full bg-white/[0.03] border border-white/5 rounded-2xl pl-14 pr-6 py-4.5 text-white font-semibold transition-all duration-300 placeholder:text-white/10;
+    @apply w-full bg-[#3b4c8a] border-[1.5px] border-[#5063a6] rounded-[18px] pl-[56px] pr-4 py-4 text-[#e2e8f0] font-[600] transition-all duration-300 placeholder:text-[#5e71ba] text-[15px];
 }
 
 .input-field:focus {
-    @apply outline-none bg-white/[0.06] border-blue-500/30 ring-4 ring-blue-500/10;
+    @apply outline-none border-[#1f63e6] ring-2 ring-[#0a46c6] bg-[#3b4c8a];
+}
+
+.login-actions {
+    @apply flex items-center gap-6 mt-10 w-full;
 }
 
 .submit-button {
-    @apply w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white font-black py-5 rounded-2xl shadow-2xl shadow-blue-500/20 transform active:scale-95 transition-all duration-300 mt-6 tracking-widest uppercase flex items-center justify-center gap-3 relative overflow-hidden;
+    @apply bg-gradient-to-r from-[#2151ff] to-[#3a35d9] hover:from-[#1d44e6] hover:to-[#312cb8] text-white font-[900] py-[18px] px-8 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-blue-700/40 tracking-[0.15em] uppercase text-xs w-[160px] whitespace-nowrap border border-blue-500/20 active:scale-95;
 }
 
-.submit-button::before {
-    content: '';
-    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full transition-transform duration-1000;
-}
-
-.submit-button:hover::before {
-    @apply translate-x-full;
-}
-
-.footer-link {
-    @apply text-indigo-400/60 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-2 mx-auto decoration-2 underline-offset-4 hover:underline;
-}
-
-.copyright-text {
-    @apply text-[9px] font-black text-white/10 uppercase tracking-[0.8em] mt-16 text-center leading-loose;
+.forgot-password-link {
+    @apply text-[#8b9de3] hover:text-white text-sm transition-colors font-medium flex-1 ml-4;
 }
 
 /* --- StudentLayout.tsx --- */
