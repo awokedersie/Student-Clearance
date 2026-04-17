@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AdminLayout from './AdminLayout';
+import { useFeedback } from '../../context/FeedbackContext';
 import Loading from '../common/Loading';
 
 const ClearanceSettings: React.FC = () => {
     const [data, setData] = useState<any>(null);
+    const { showToast, showConfirm } = useFeedback();
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
@@ -35,13 +37,14 @@ const ClearanceSettings: React.FC = () => {
     }, []);
 
     const handleAction = async (action: string) => {
-        if (!confirm(`Are you sure you want to ${action.replace('_', ' ')}?`)) return;
+        const confirmed = await showConfirm('Clearance Action', `Are you sure you want to ${action.replace('_', ' ')}?`);
+        if (!confirmed) return;
         try {
             const response = await axios.post(`/admin/clearance-settings/action/${action}`);
-            alert(response.data.message || 'Action completed successfully');
+            showToast(response.data.message || 'Action completed successfully', 'success');
             fetchData();
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Action failed');
+            showToast(error.response?.data?.message || 'Action failed', 'error');
         }
     };
 
@@ -53,9 +56,10 @@ const ClearanceSettings: React.FC = () => {
 
         try {
             await axios.post('/admin/clearance-settings', payload);
+            showToast('Settings updated successfully', 'success');
             fetchData();
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Failed to update settings');
+            showToast(error.response?.data?.message || 'Failed to update settings', 'error');
         } finally {
             setSubmitting(false);
         }

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 import Loading from '../common/Loading';
+import { useFeedback } from '../../context/FeedbackContext';
 
 interface Admin {
     id: number;
@@ -18,6 +19,7 @@ interface Admin {
 const ManageAdmins: React.FC = () => {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const { showToast, showConfirm } = useFeedback();
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
     const [showForm, setShowForm] = useState(false);
@@ -72,7 +74,7 @@ const ManageAdmins: React.FC = () => {
         try {
             const response = await axios.post(url, formData);
             if (response.data.success) {
-                alert(response.data.message || 'Admin saved successfully');
+                showToast(response.data.message || 'Admin saved successfully', 'success');
                 setShowForm(false);
                 setEditAdmin(null);
                 setFormData({
@@ -82,21 +84,23 @@ const ManageAdmins: React.FC = () => {
                 fetchData(search);
             }
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Submission failed');
+            showToast(error.response?.data?.message || 'Submission failed', 'error');
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm('DELETE this admin account?')) return;
+        const confirmed = await showConfirm('Delete Admin', 'Are you sure you want to DELETE this admin account?');
+        if (!confirmed) return;
         try {
             const response = await axios.get(`/admin/system/manage-admins/delete/${id}`);
             if (response.data.success) {
+                showToast('Admin deleted successfully', 'success');
                 fetchData(search);
             }
         } catch (error) {
-            alert('Failed to delete admin');
+            showToast('Failed to delete admin', 'error');
         }
     };
 

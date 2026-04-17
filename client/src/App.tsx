@@ -14,11 +14,13 @@ import ClearanceSettings from './components/admin/ClearanceSettings';
 import DepartmentDashboard from './components/admin/DepartmentDashboard';
 import ForgotPassword from './components/common/ForgotPassword';
 import AuditLogs from './components/admin/AuditLogs';
+import { FeedbackProvider } from './context/FeedbackContext';
 
 function App() {
   return (
-    <Router>
-      <Routes>
+    <FeedbackProvider>
+      <Router>
+        <Routes>
         {/* Student Routes */}
         <Route path="/login" element={<StudentLogin />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -45,7 +47,8 @@ function App() {
         {/* Redirects */}
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
-    </Router>
+      </Router>
+    </FeedbackProvider>
   );
 }
 

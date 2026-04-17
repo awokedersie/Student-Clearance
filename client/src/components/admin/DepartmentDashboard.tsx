@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 import Loading from '../common/Loading';
+import { useFeedback } from '../../context/FeedbackContext';
 
 interface ClearanceRecord {
     id: number;
@@ -24,6 +25,7 @@ const DepartmentDashboard: React.FC = () => {
     const { deptName } = useParams<{ deptName: string }>();
     const location = useLocation();
     const navigate = useNavigate();
+    const { showToast, showConfirm, showPrompt, showAlert } = useFeedback();
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -32,7 +34,6 @@ const DepartmentDashboard: React.FC = () => {
     const [selectedItems, setSelectedItems] = useState<{ id: number, studentId: string }[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [bulkDropdownOpen, setBulkDropdownOpen] = useState(false);
-    const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
     const [expandedDetails, setExpandedDetails] = useState<string[]>([]);
 
     const toggleDetails = (studentId: string) => {
@@ -43,10 +44,7 @@ const DepartmentDashboard: React.FC = () => {
         );
     };
 
-    const showMessage = (message: string, type: 'success' | 'error' = 'success') => {
-        setNotification({ message, type });
-        setTimeout(() => setNotification(null), 5000);
-    };
+
 
     const apiPath = location.pathname; // e.g. /admin/departments/library
 
@@ -100,15 +98,15 @@ const DepartmentDashboard: React.FC = () => {
             });
 
             if (response.data.success) {
-                showMessage(response.data.message || 'Updated successfully!', 'success');
+                showToast(response.data.message || 'Updated successfully!', 'success');
             } else {
-                showMessage(response.data.message || 'Action failed', 'error');
+                showToast(response.data.message || 'Action failed', 'error');
             }
             fetchData();
         } catch (error: any) {
             console.error('Status update failed:', error);
             const errorMsg = error.response?.data?.message || 'Status update failed. Please try again.';
-            showMessage(errorMsg, 'error');
+            showToast(errorMsg, 'error');
         } finally {
             setSubmitting(false);
         }
@@ -116,17 +114,18 @@ const DepartmentDashboard: React.FC = () => {
 
     const handleBulkAction = async (status: 'approved' | 'rejected') => {
         if (selectedItems.length === 0) {
-            alert('Please select at least one student!');
+            showAlert('Wait!', 'Please select at least one student!');
             return;
         }
 
         let reason = '';
         if (status === 'rejected') {
-            const inputReason = prompt('Reason for bulk rejection:');
+            const inputReason = await showPrompt('Bulk Rejection', 'Please provide a reason for bulk rejection:');
             if (!inputReason) return;
             reason = inputReason;
         } else {
-            if (!confirm(`Are you sure you want to approve ${selectedItems.length} student(s)?`)) return;
+            const confirmed = await showConfirm('Approve Selected', `Are you sure you want to approve ${selectedItems.length} student(s)?`);
+            if (!confirmed) return;
         }
 
         setSubmitting(true);
@@ -139,24 +138,25 @@ const DepartmentDashboard: React.FC = () => {
             });
 
             if (response.data.success) {
-                const msg = response.data.message || (response.data.messages && response.data.messages.map((m: any) => m.text || m.msg).join('\n')) || 'Bulk action completed successfully!';
-                showMessage(msg, 'success');
+                const msg = response.data.message || 'Bulk action completed successfully!';
+                showToast(msg, 'success');
                 setSelectedItems([]);
                 fetchData();
             } else {
-                const msg = response.data.message || (response.data.messages && response.data.messages.map((m: any) => m.text || m.msg).join('\n')) || 'Bulk action failed';
-                showMessage(msg, 'error');
+                const msg = response.data.message || 'Bulk action failed';
+                showToast(msg, 'error');
             }
         } catch (error: any) {
             console.error('Bulk action failed:', error);
-            showMessage(error.response?.data?.message || 'Bulk action failed. Please try again.', 'error');
+            showToast(error.response?.data?.message || 'Bulk action failed. Please try again.', 'error');
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleVerifyExit = async (studentId: string) => {
-        if (!confirm('Confirm exit verification for this student?')) return;
+        const confirmed = await showConfirm('Verify Exit', 'Confirm exit verification for this student?');
+        if (!confirmed) return;
         setSubmitting(true);
         try {
             const response = await axios.post(apiPath, {
@@ -164,14 +164,14 @@ const DepartmentDashboard: React.FC = () => {
             });
 
             if (response.data.success) {
-                showMessage(response.data.message || 'Exit verified successfully!', 'success');
+                showToast(response.data.message || 'Exit verified successfully!', 'success');
                 fetchData();
             } else {
-                showMessage(response.data.message || 'Verification failed', 'error');
+                showToast(response.data.message || 'Verification failed', 'error');
             }
         } catch (error: any) {
             console.error('Exit verification failed:', error);
-            showMessage(error.response?.data?.message || 'Verification failed', 'error');
+            showToast(error.response?.data?.message || 'Verification failed', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -219,29 +219,7 @@ const DepartmentDashboard: React.FC = () => {
         <AdminLayout user={user}>
             <div className="dept-dashboard-layout">
                 {/* Modern Inline Notification Banner */}
-                {notification && (
-                    <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-                        <div className={`notification-banner ${notification.type === 'success'
-                            ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
-                            : 'bg-rose-50 border-rose-100 text-rose-800'
-                            }`}>
-                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-inner ${notification.type === 'success' ? 'bg-emerald-100' : 'bg-rose-100'
-                                }`}>
-                                {notification.type === 'success' ? '✅' : '🚨'}
-                            </div>
-                            <div className="flex flex-col flex-1">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-50 mb-0.5">
-                                    {notification.type === 'success' ? 'System Success' : 'System Error'}
-                                </p>
-                                <p className="text-sm font-bold tracking-tight">{notification.message}</p>
-                            </div>
-                            <button
-                                onClick={() => setNotification(null)}
-                                className="hover:opacity-50 transition-opacity p-2 text-current"
-                            >✕</button>
-                        </div>
-                    </div>
-                )}
+
                 {/* Header Section */}
                 <div className="dept-header-info">
                     <div>
@@ -603,8 +581,8 @@ const DepartmentDashboard: React.FC = () => {
                                                                         </button>
                                                                         <button
                                                                             disabled={submitting || !req.can_reject}
-                                                                            onClick={() => {
-                                                                                const reason = prompt('Reason for rejection:');
+                                                                            onClick={async () => {
+                                                                                const reason = await showPrompt('Reject Request', 'Please provide a reason for rejection:');
                                                                                 if (reason) {
                                                                                     handleUpdateStatus(req.student_id, req.id, 'rejected', reason);
                                                                                 }
