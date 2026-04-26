@@ -79,6 +79,47 @@ graph TD
 
 ---
 
+## 🗄️ Database Migrations (Version Control)
+
+This project uses `node-pg-migrate` to manage database schema changes safely and predictably, functioning as "version control" for your PostgreSQL database.
+
+### The Standard Workflow
+
+1. **Create a new migration file:**
+   ```bash
+   npx node-pg-migrate create description-of-change
+   ```
+   *This generates a timestamped skeleton file in the `migrations/` directory.*
+
+2. **Write the schema definition:**
+   Open the generated file and define your tables or columns inside `exports.up`. Provide a rollback strategy in `exports.down`.
+   ```javascript
+   exports.up = (pgm) => {
+       pgm.createTable('example_table', {
+           id: 'id',
+           name: { type: 'varchar(50)', notNull: true }
+       });
+   };
+   
+   exports.down = (pgm) => {
+       pgm.dropTable('example_table');
+   };
+   ```
+
+3. **Execute the migration (UP):**
+   ```bash
+   npm run migrate up
+   ```
+   *This translates your JavaScript into PostgreSQL commands, builds the tables, and records the timestamp in the `pgmigrations` tracking table so it never runs twice.*
+
+4. **Rollback if needed (DOWN):**
+   ```bash
+   npm run migrate down
+   ```
+   *This runs the `exports.down` function of the most recent migration to safely undo mistakes.*
+
+---
+
 ## 📂 Project Architecture
 ```text
 /

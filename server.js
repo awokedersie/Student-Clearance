@@ -37,8 +37,9 @@ const limiter = rateLimit({
     legacyHeaders: false,
     skipSuccessfulRequests: true, // Only count failed requests!
     // Fix for Render/Proxy: Ensure we get the real IP
-    keyGenerator: (req) => {
-        return req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
+    keyGenerator: (req, res) => {
+        const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.ip || '127.0.0.1';
+        return ip.replace(/^.*:/, ''); // Strip IPv6 prefix if present to avoid ERR_ERL_KEY_GEN_IPV6
     }
 });
 

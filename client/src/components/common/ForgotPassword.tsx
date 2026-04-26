@@ -110,7 +110,7 @@ const ForgotPassword: React.FC = () => {
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="Enter your first name"
-                                        className="input-field"
+                                        className="input-field !pl-6"
                                         required
                                     />
                                 </div>
@@ -121,7 +121,7 @@ const ForgotPassword: React.FC = () => {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="Enter your email"
-                                        className="input-field"
+                                        className="input-field !pl-6"
                                         required
                                     />
                                 </div>
@@ -129,7 +129,7 @@ const ForgotPassword: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="submit-button"
+                                className="submit-button !w-full"
                             >
                                 {loading ? 'Initializing Stream...' : 'Send Code ⟶'}
                             </button>
@@ -154,7 +154,7 @@ const ForgotPassword: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="submit-button"
+                                className="submit-button !w-full"
                             >
                                 {loading ? 'Validating Token...' : 'Verify Identity ⟶'}
                             </button>
@@ -172,7 +172,7 @@ const ForgotPassword: React.FC = () => {
                                             value={newPassword}
                                             onChange={(e) => setNewPassword(e.target.value)}
                                             placeholder="••••••••"
-                                            className="input-field pr-12"
+                                            className="input-field !pl-6 pr-12"
                                             required
                                         />
                                         <button
@@ -201,7 +201,7 @@ const ForgotPassword: React.FC = () => {
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
                                             placeholder="••••••••"
-                                            className="input-field pr-12"
+                                            className="input-field !pl-6 pr-12"
                                             required
                                         />
                                         <button
@@ -226,7 +226,7 @@ const ForgotPassword: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="submit-button"
+                                className="submit-button !w-full"
                             >
                                 {loading ? 'Updating Credentials...' : 'Re-establish Access ⟶'}
                             </button>
@@ -244,7 +244,7 @@ const ForgotPassword: React.FC = () => {
                             </div>
                             <Link
                                 to="/login"
-                                className="submit-button"
+                                className="submit-button !w-full"
                             >
                                 Return to Login
                             </Link>
