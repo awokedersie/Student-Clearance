@@ -35,6 +35,7 @@ const limiter = rateLimit({
     message: { success: false, message: 'Too many requests, please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
+    skipSuccessfulRequests: true, // Only count failed requests!
     // Fix for Render/Proxy: Ensure we get the real IP
     keyGenerator: (req) => {
         return req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
