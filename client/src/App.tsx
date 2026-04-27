@@ -15,11 +15,13 @@ import DepartmentDashboard from './components/admin/DepartmentDashboard';
 import ForgotPassword from './components/common/ForgotPassword';
 import AuditLogs from './components/admin/AuditLogs';
 import { FeedbackProvider } from './context/FeedbackContext';
+import SessionTimeout from './components/common/SessionTimeout';
 
 function App() {
   return (
     <FeedbackProvider>
       <Router>
+        <SessionTimeout />
         <Routes>
         {/* Student Routes */}
         <Route path="/login" element={<StudentLogin />} />

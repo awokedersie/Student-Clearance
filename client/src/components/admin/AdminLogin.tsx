@@ -117,14 +117,7 @@ const AdminLogin: React.FC = () => {
                         </div>
                     </form>
 
-                    <div className="mt-8 pt-8 border-t border-white/5 text-center">
-                        <button
-                            onClick={() => navigate('/login')}
-                            className="text-indigo-400 hover:text-white text-sm font-bold transition-all flex items-center justify-center gap-2 mx-auto decoration-2 underline-offset-4 hover:underline"
-                        >
-                            <span>👩‍🎓</span> Student Access?
-                        </button>
-                    </div>
+
                 </div>
             </div>
         </div>
