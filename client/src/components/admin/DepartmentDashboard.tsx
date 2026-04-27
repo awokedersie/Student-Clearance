@@ -582,8 +582,9 @@ const DepartmentDashboard: React.FC = () => {
                                                                         <button
                                                                             disabled={submitting || !req.can_reject}
                                                                             onClick={async () => {
-                                                                                const reason = await showPrompt('Reject Request', 'Please provide a reason for rejection:');
-                                                                                if (reason) {
+                                                                                // CHANGED: Using native window.prompt instead of showPrompt for reliability
+                                                                                const reason = window.prompt('Please provide a reason for rejection:');
+                                                                                if (reason && reason.trim()) {
                                                                                     handleUpdateStatus(req.student_id, req.id, 'rejected', reason);
                                                                                 }
                                                                                 setActiveDropdown(null);
