@@ -173,14 +173,15 @@ exports.getDashboardData = async (req, res) => {
 
         const [allStudents] = await db.execute(query, queryParams);
 
-        // Map lock status
+        // CORRECTED: Registrar is the FINAL stage - can always change decisions (no locks)
+        // But can only approve if Department has approved
         const students = allStudents.map(s => {
             return {
                 ...s,
-                is_locked: false, // Registrar can toggle statuses to fix mistakes
+                is_locked: false, // Registrar can always change decisions (no next department)
                 locked_by_dept: null,
                 can_approve: s.status !== 'approved' && s.department_status === 'approved',
-                can_reject: s.status !== 'rejected'
+                can_reject: s.status !== 'rejected' // Can always reject regardless of other departments
             };
         });
 
@@ -264,6 +265,22 @@ exports.handleAction = async (req, res) => {
             }
             const student = students[0];
 
+            // CORRECTED: For Registrar, no lock checks - can always change decisions
+            // But we should check if Department has approved for approvals only
+            if (isApprove) {
+                const [deptCheck] = await db.execute(`
+                    SELECT status FROM clearance_requests 
+                    WHERE student_id = ? AND academic_year = ? AND target_department = 'department'
+                    ORDER BY id DESC LIMIT 1
+                `, [sid, currentAcademicYear]);
+
+                const deptStatus = deptCheck[0]?.status || 'pending';
+                if (deptStatus !== 'approved') {
+                    console.log(`🚫 Approval blocked: Student ${sid} - Department has not approved yet. Cannot provide final seal.`);
+                    continue; // Skip this student
+                }
+            }
+
             // 1. Update clearance_requests status for registrar
             const notificationMsg = isApprove ? 'Your final clearance has been approved. You can now download your certificate.' : `Your final clearance has been rejected. Reason: ${finalRejectReason || 'Please contact office'}`;
             await db.execute(
@@ -287,6 +304,10 @@ exports.handleAction = async (req, res) => {
             await sendClearanceDecisionEmail(student.email, student.name, finalStatus, finalRejectReason);
 
             processedCount++;
+        }
+
+        if (processedCount === 0 && studentsToProcess.length > 0 && isApprove) {
+            return res.json({ success: false, message: 'Action Restricted: Department has not approved these student(s) yet. Cannot provide final seal until Department approves.' });
         }
 
         res.json({

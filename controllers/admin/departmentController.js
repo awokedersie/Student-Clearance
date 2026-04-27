@@ -113,11 +113,14 @@ exports.getDashboardData = async (req, res) => {
             const dormitory_status = request.dormitory_status || 'pending';
             const registrar_status = request.registrar_status || 'pending';
 
-            // Locked if already approved OR Registrar is already approved
+            // CORRECTED: Department is locked ONLY if Registrar has acted (not pending)
             let locked_by_dept = null;
-            if (registrar_status === 'approved') locked_by_dept = 'Registrar';
+            let is_locked = false;
 
-            const is_locked = (locked_by_dept !== null);
+            if (registrar_status !== 'pending') {
+                is_locked = true;
+                locked_by_dept = 'Registrar';
+            }
 
             // All previous stages must be approved
             const can_approve = (library_status === 'approved' && cafeteria_status === 'approved' && dormitory_status === 'approved') && !is_locked;
@@ -171,7 +174,8 @@ exports.handleAction = async (req, res) => {
             return res.status(400).json({ success: false, message: 'No requests selected' });
         }
 
-        const status = (action_type === 'approve' || bulk_action === 'approve') ? 'approved' : 'rejected';
+        const isApproving = (action_type === 'approve' || bulk_action === 'approve');
+        const status = isApproving ? 'approved' : 'rejected';
         const reason = bulk_action ? bulk_reject_reason : reject_reason;
 
         let processedCount = 0;
@@ -180,20 +184,33 @@ exports.handleAction = async (req, res) => {
             const [clearanceRows] = await db.execute("SELECT student_id, academic_year, name, last_name, status FROM clearance_requests WHERE id = ? AND target_department = 'department'", [id]);
             if (clearanceRows.length === 0) continue;
 
-            const { student_id, academic_year, name, last_name } = clearanceRows[0];
+            const { student_id, academic_year, name, last_name, status: currentStatus } = clearanceRows[0];
             const studentName = `${name} ${last_name}`;
 
-            if (true) { // Logic to check locks
-                const [lockedBy] = await db.execute(`
-                    SELECT COUNT(*) as registrar_approved FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = 'registrar' AND status = 'approved'
+            // Skip if already in target status
+            if (currentStatus === status) {
+                console.log(`⏭️ Student ${student_id} already ${status}`);
+                continue;
+            }
+
+            // CORRECTED: Only check if NEXT department (Registrar) has acted, and only block APPROVALS
+            if (isApproving) {
+                const [nextDeptStatus] = await db.execute(`
+                    SELECT status FROM clearance_requests 
+                    WHERE student_id = ? AND academic_year = ? AND target_department = 'registrar'
+                    ORDER BY id DESC LIMIT 1
                 `, [student_id, academic_year]);
 
-                if (lockedBy[0].registrar_approved > 0) {
-                    console.log(`🚫 Action blocked: Student ${student_id} is locked by Registrar approval.`);
-                    continue; // Skip locked student
+                const registrarStatus = nextDeptStatus[0]?.status || 'pending';
+                const registrarActed = registrarStatus !== 'pending';
+
+                if (registrarActed) {
+                    console.log(`🚫 Approval blocked: Student ${student_id} - Registrar has already ${registrarStatus}. Department can no longer change decision.`);
+                    continue; // Skip locked student for approval only
                 }
             }
 
+            // Rejections are always allowed regardless of locks
             await db.execute(
                 "UPDATE clearance_requests SET status = ?, reject_reason = ?, approved_at = CASE WHEN ? = 'approved' THEN CURRENT_TIMESTAMP ELSE approved_at END, approved_by = ?, requested_at = NOW() WHERE id = ?",
                 [status, reason || null, status, req.session.user.full_name, id]
@@ -210,8 +227,8 @@ exports.handleAction = async (req, res) => {
             processedCount++;
         }
 
-        if (processedCount === 0 && requestIds.length > 0) {
-            return res.json({ success: false, message: 'Action Restricted: Selected student(s) are already approved by the Registrar.' });
+        if (processedCount === 0 && requestIds.length > 0 && isApproving) {
+            return res.json({ success: false, message: 'Action Restricted: Registrar has already processed these student(s). Department decisions are locked once next department acts.' });
         }
 
         res.json({

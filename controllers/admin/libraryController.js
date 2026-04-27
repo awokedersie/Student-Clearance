@@ -70,16 +70,14 @@ exports.getDashboardData = async (req, res) => {
             const department_status = request.department_status || 'pending';
             const registrar_status = request.registrar_status || 'pending';
 
-            // Library is locked if already approved OR ANY subsequent stage is approved
+            // CORRECTED: Library is locked ONLY if Cafeteria has acted (not pending)
             let locked_by_dept = null;
-            if (registrar_status === 'approved') locked_by_dept = 'Registrar';
-            else if (department_status === 'approved') locked_by_dept = 'Department';
-            else if (dormitory_status === 'approved') locked_by_dept = 'Dormitory';
-            else if (cafeteria_status === 'approved') locked_by_dept = 'Cafeteria';
+            let is_locked = false;
 
-            const is_locked = (
-                locked_by_dept !== null
-            );
+            if (cafeteria_status !== 'pending') {
+                is_locked = true;
+                locked_by_dept = 'Cafeteria';
+            }
 
             return {
                 ...request,
@@ -131,7 +129,8 @@ exports.handleAction = async (req, res) => {
             return res.status(400).json({ success: false, message: 'No requests selected' });
         }
 
-        const status = (action_type === 'approve' || req.body.approve || bulk_action === 'approve') ? 'approved' : 'rejected';
+        const isApproving = (action_type === 'approve' || req.body.approve || bulk_action === 'approve');
+        const status = isApproving ? 'approved' : 'rejected';
         const reason = bulk_action ? bulk_reject_reason : reject_reason;
 
         let processedCount = 0;
@@ -140,25 +139,33 @@ exports.handleAction = async (req, res) => {
             const [clearanceRows] = await db.execute("SELECT student_id, academic_year, name, last_name, status FROM clearance_requests WHERE id = ? AND target_department = 'library'", [id]);
             if (clearanceRows.length === 0) continue;
 
-            const { student_id, academic_year, name, last_name } = clearanceRows[0];
+            const { student_id, academic_year, name, last_name, status: currentStatus } = clearanceRows[0];
             const studentName = `${name} ${last_name}`;
 
-            if (true) { // Logic to check locks
-                const [lockedBy] = await db.execute(`
-                    SELECT 
-                        (SELECT COUNT(*) FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = 'cafeteria' AND status = 'approved') as cafeteria_approved,
-                        (SELECT COUNT(*) FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = 'dormitory' AND status = 'approved') as dormitory_approved,
-                        (SELECT COUNT(*) FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = 'department' AND status = 'approved') as department_approved,
-                        (SELECT COUNT(*) FROM clearance_requests WHERE student_id = ? AND academic_year = ? AND target_department = 'registrar' AND status = 'approved') as registrar_approved
-                `, [student_id, academic_year, student_id, academic_year, student_id, academic_year, student_id, academic_year]);
+            // Skip if already in target status
+            if (currentStatus === status) {
+                console.log(`⏭️ Student ${student_id} already ${status}`);
+                continue;
+            }
 
-                const locks = lockedBy[0];
-                if (locks.cafeteria_approved > 0 || locks.dormitory_approved > 0 || locks.department_approved > 0 || locks.registrar_approved > 0) {
-                    console.log(`🚫 Action blocked: Student ${student_id} is locked by subsequent approvals.`);
-                    continue; // Skip locked student
+            // CORRECTED: Only check if NEXT department (Cafeteria) has acted, and only block APPROVALS
+            if (isApproving) {
+                const [nextDeptStatus] = await db.execute(`
+                    SELECT status FROM clearance_requests 
+                    WHERE student_id = ? AND academic_year = ? AND target_department = 'cafeteria'
+                    ORDER BY id DESC LIMIT 1
+                `, [student_id, academic_year]);
+
+                const cafeteriaStatus = nextDeptStatus[0]?.status || 'pending';
+                const cafeteriaActed = cafeteriaStatus !== 'pending';
+
+                if (cafeteriaActed) {
+                    console.log(`🚫 Approval blocked: Student ${student_id} - Cafeteria has already ${cafeteriaStatus}. Library can no longer change decision.`);
+                    continue; // Skip locked student for approval only
                 }
             }
 
+            // Rejections are always allowed regardless of locks
             await db.execute(
                 "UPDATE clearance_requests SET status = ?, reject_reason = ?, approved_at = CASE WHEN ? = 'approved' THEN CURRENT_TIMESTAMP ELSE approved_at END, rejected_at = CASE WHEN ? = 'rejected' THEN CURRENT_TIMESTAMP ELSE rejected_at END, approved_by = ? WHERE id = ?",
                 [status, reason || null, status, status, req.session.user.full_name, id]
@@ -175,8 +182,8 @@ exports.handleAction = async (req, res) => {
             processedCount++;
         }
 
-        if (processedCount === 0 && requestIds.length > 0) {
-            return res.json({ success: false, message: 'Action Restricted: Selected student(s) are already approved by subsequent departments.' });
+        if (processedCount === 0 && requestIds.length > 0 && isApproving) {
+            return res.json({ success: false, message: 'Action Restricted: Cafeteria has already processed these student(s). Library decisions are locked once next department acts.' });
         }
 
         res.json({
