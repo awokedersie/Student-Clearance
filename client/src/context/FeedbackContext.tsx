@@ -133,7 +133,7 @@ export const FeedbackProvider: React.FC<FeedbackProviderProps> = ({ children }) 
                                 <input
                                     autoFocus
                                     type="text"
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all mb-6"
+                                    className="feedback-modal-input w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all mb-6"
                                     placeholder="Enter your response..."
                                     defaultValue={modal.defaultValue}
                                     onKeyDown={(e) => {
@@ -155,8 +155,8 @@ export const FeedbackProvider: React.FC<FeedbackProviderProps> = ({ children }) 
                                 <button
                                     onClick={() => {
                                         if (modal.type === 'prompt') {
-                                            const input = document.querySelector('input') as HTMLInputElement;
-                                            modal.onResolve(input.value);
+                                            const input = document.querySelector('.feedback-modal-input') as HTMLInputElement;
+                                            modal.onResolve(input?.value || '');
                                         } else {
                                             modal.onResolve(true);
                                         }
