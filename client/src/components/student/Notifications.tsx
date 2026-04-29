@@ -9,9 +9,11 @@ const Notifications: React.FC = () => {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showDownloadButton, setShowDownloadButton] = useState(false);
+    const [downloading, setDownloading] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
+        document.title = 'Notifications — DBU Clearance';
         const fetchNotifications = async () => {
             try {
                 const response = await axios.get('/student/notifications/data');
@@ -33,6 +35,36 @@ const Notifications: React.FC = () => {
         fetchNotifications();
     }, [navigate]);
 
+    const getRelativeTime = (dateStr: string) => {
+        const now = new Date().getTime();
+        const then = new Date(dateStr).getTime();
+        const diff = Math.floor((now - then) / 1000);
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+        return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    const handleDownload = async () => {
+        setDownloading(true);
+        try {
+            const response = await axios.get('/student/download-certificate', { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `DBU_Clearance_Certificate.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error('Failed to download certificate', error);
+            alert('Failed to download certificate. Please try again later.');
+        } finally {
+            setDownloading(false);
+        }
+    };
+
     if (loading) {
         return <Loading />;
     }
@@ -47,10 +79,20 @@ const Notifications: React.FC = () => {
                     </div>
                     {showDownloadButton && (
                         <button
-                            onClick={() => window.open('/student/download-certificate', '_blank')}
-                            className="download-premium-btn"
+                            onClick={handleDownload}
+                            disabled={downloading}
+                            className="download-premium-btn disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            <span className="text-lg group-hover:animate-bounce">📥</span> Download Clearance Certificate
+                            {downloading ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    Generating PDF...
+                                </>
+                            ) : (
+                                <>
+                                    <span className="text-lg">📥</span> Download Clearance Certificate
+                                </>
+                            )}
                         </button>
                     )}
                 </div>
@@ -63,7 +105,7 @@ const Notifications: React.FC = () => {
                                 📬
                             </div>
                             <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">No Notifications</h3>
-                            <p className="text-gray-400 mt-3 font-medium text-sm max-w-xs mx-auto">You don’t have any clearance updates at the moment.</p>
+                            <p className="text-gray-400 mt-3 font-medium text-sm max-w-xs mx-auto">You don't have any clearance updates at the moment.</p>
                         </div>
                     </div>
                 ) : (
@@ -90,8 +132,8 @@ const Notifications: React.FC = () => {
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="notification-date-pill">
-                                                {new Date(n.date_sent).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            <span className="notification-date-pill" title={new Date(n.date_sent).toLocaleString()}>
+                                                {getRelativeTime(n.date_sent)}
                                             </span>
                                         </div>
 
@@ -102,7 +144,7 @@ const Notifications: React.FC = () => {
                                         </p>
 
                                         <div className="flex items-center gap-2 pt-2">
-                                            <div className="w-2 h-2 rounded-full bg-indigo-500 group-hover:scale-150 transition-transform"></div>
+                                            <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
                                             <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest opacity-60">System Log: ID-{n.id || (1000 + i)}</span>
                                         </div>
                                     </div>

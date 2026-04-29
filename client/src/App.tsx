@@ -16,10 +16,12 @@ import ForgotPassword from './components/common/ForgotPassword';
 import AuditLogs from './components/admin/AuditLogs';
 import { FeedbackProvider } from './context/FeedbackContext';
 import SessionTimeout from './components/common/SessionTimeout';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 function App() {
   return (
-    <FeedbackProvider>
+    <ErrorBoundary>
+      <FeedbackProvider>
       <Router>
         <SessionTimeout />
         <Routes>
@@ -51,6 +53,7 @@ function App() {
       </Routes>
       </Router>
     </FeedbackProvider>
+    </ErrorBoundary>
   );
 }
 

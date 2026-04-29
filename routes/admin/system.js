@@ -36,6 +36,7 @@ router.post('/system/manage-students/update', requireSystemAdmin, studentControl
 router.post('/system/manage-students/delete', requireSystemAdmin, systemController.deleteStudent);
 router.post('/system/manage-students/toggle-status', requireSystemAdmin, systemController.toggleStudentStatus);
 router.post('/system/manage-students/bulk-actions', requireSystemAdmin, systemController.bulkStudentActions);
+router.post('/system/manage-students/reset-password', requireSystemAdmin, systemController.resetStudentPassword);
 
 // Audit Logs (Accessible by System Admin & Registrar)
 router.get('/system/audit-logs/data', requireSystemAdmin, systemController.getAuditLogs);

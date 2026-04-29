@@ -21,8 +21,8 @@ const StudentDashboard: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
     const [academicYear, setAcademicYear] = useState<string>('2023 - 2024');
     const [systemStatus, setSystemStatus] = useState<string>('Loading...');
-    const [daysRemaining, setDaysRemaining] = useState<number>(0);
-    const [hoursRemaining, setHoursRemaining] = useState<number>(0);
+    const [targetDate, setTargetDate] = useState<string | null>(null);
+    const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
     const [loading, setLoading] = useState(true);
     // New state for progress circle
     const [progress, setProgress] = useState(0);
@@ -35,8 +35,9 @@ const StudentDashboard: React.FC = () => {
                 if (response.data.success) {
                     setUser(response.data.user);
                     setSystemStatus(response.data.systemStatus || 'Inactive');
-                    setDaysRemaining(response.data.daysRemaining || 0);
-                    setHoursRemaining(response.data.hoursRemaining || 0);
+                    if (response.data.targetDate) {
+                        setTargetDate(response.data.targetDate);
+                    }
                     if (response.data.academicYear) {
                         setAcademicYear(response.data.academicYear.replace('-', ' - '));
                     }
@@ -46,7 +47,7 @@ const StudentDashboard: React.FC = () => {
                     // Ideally: const statusRes = await axios.get('/student/clearance-status/data');
                     // setProgress(calculatePercentage(statusRes.data));
                     // For now, let's look for it in dashboard data or default to 0
-                    if (response.data.progressPercentage) {
+                    if (response.data.progressPercentage !== undefined) {
                         setProgress(response.data.progressPercentage);
                     }
                 } else {
@@ -62,6 +63,35 @@ const StudentDashboard: React.FC = () => {
 
         fetchDashboard();
     }, [navigate]);
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (targetDate && (systemStatus === 'Clearance Open' || systemStatus === 'Clearance Scheduled')) {
+            const updateTime = () => {
+                const now = new Date().getTime();
+                const target = new Date(targetDate).getTime();
+                const diffTime = target - now;
+                
+                if (diffTime <= 0) {
+                    setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+                    clearInterval(interval);
+                    // Refresh status if timer hits 0
+                    window.location.reload();
+                } else {
+                    setTimeLeft({
+                        days: Math.floor(diffTime / (1000 * 60 * 60 * 24)),
+                        hours: Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                        minutes: Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60)),
+                        seconds: Math.floor((diffTime % (1000 * 60)) / 1000)
+                    });
+                }
+            };
+            
+            updateTime(); // Initial call
+            interval = setInterval(updateTime, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [targetDate, systemStatus]);
 
     if (loading) {
         return <Loading />;
@@ -228,9 +258,11 @@ const StudentDashboard: React.FC = () => {
                                     </p>
                                     <p className="sidebar-stat-value text-lg">
                                         {systemStatus === 'Clearance Open' || systemStatus === 'Clearance Scheduled' ? (
-                                            daysRemaining > 0 || hoursRemaining > 0
-                                                ? `${daysRemaining}d ${hoursRemaining}h Remaining`
-                                                : 'Starting/Closing Soon'
+                                            timeLeft ? (
+                                                <span className="font-mono tracking-tight">
+                                                    {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m <span className="opacity-50">{timeLeft.seconds}s</span>
+                                                </span>
+                                            ) : 'Calculating...'
                                         ) : (
                                             systemStatus === 'Clearance Expired' ? 'Expired' : 'Unavailable'
                                         )}

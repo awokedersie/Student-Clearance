@@ -3,6 +3,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const dns = require('dns').promises;
+const { validatePassword } = require('../../utils/validators');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -72,23 +73,6 @@ function validateImageSimple(filePath) {
     });
 }
 
-// Helper: validate password
-function validatePassword(password) {
-    const errors = [];
-    if (password.length < 8) errors.push("• At least 8 characters long");
-    if (password.length > 16) errors.push("• Maximum 16 characters allowed");
-    if (!/[A-Z]/.test(password)) errors.push("• At least one uppercase letter (A-Z)");
-    if (!/[a-z]/.test(password)) errors.push("• At least one lowercase letter (a-z)");
-    if (!/[0-9]/.test(password)) errors.push("• At least one number (0-9)");
-    if (!/[!@#$%^&*()\-_=+{};:,<.>]/.test(password)) errors.push("• At least one special character (!@#$%^&*()_-+=)");
-    if (/\s/.test(password)) errors.push("• No spaces allowed");
-
-    const commonPasswords = ['password', '12345678', 'qwerty123', 'admin123', 'welcome1'];
-    if (commonPasswords.includes(password.toLowerCase())) {
-        errors.push("• Password is too common, choose a stronger one");
-    }
-    return errors;
-}
 
 exports.getDashboardData = async (req, res) => {
     try {
@@ -113,6 +97,7 @@ exports.getDashboardData = async (req, res) => {
         let systemStatus = 'System Inactive';
         let daysRemaining = 0;
         let hoursRemaining = 0;
+        let targetDate = null;
         let activeAcademicYear = academicYear;
 
         try {
@@ -129,11 +114,13 @@ exports.getDashboardData = async (req, res) => {
                 if (setting.is_active) {
                     if (now >= start && now <= end) {
                         systemStatus = 'Clearance Open';
+                        targetDate = end.toISOString();
                         const diffTime = end.getTime() - now.getTime();
                         daysRemaining = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
                         hoursRemaining = Math.max(0, Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
                     } else if (now < start) {
                         systemStatus = 'Clearance Scheduled';
+                        targetDate = start.toISOString();
                         const diffTime = start.getTime() - now.getTime();
                         daysRemaining = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
                         hoursRemaining = Math.max(0, Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
@@ -169,6 +156,7 @@ exports.getDashboardData = async (req, res) => {
                 status: status
             },
             systemStatus,
+            targetDate,
             daysRemaining,
             hoursRemaining: hoursRemaining || 0,
             academicYear: academicYear,
@@ -607,6 +595,7 @@ exports.getClearanceRequestData = async (req, res) => {
         let daysRemaining = 0;
         let hoursRemaining = 0;
         let minutesRemaining = 0;
+        let targetDate = null;
         let dbAcademicYear = null;
 
         try {
@@ -632,6 +621,7 @@ exports.getClearanceRequestData = async (req, res) => {
                 if (clearanceSettings.is_active) {
                     if (now >= start && now <= end) {
                         systemActive = true;
+                        targetDate = end.toISOString();
                         const diffMs = end - now;
                         daysRemaining = Math.floor(diffMs / (1000 * 60 * 60 * 24));
                         hoursRemaining = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -642,9 +632,11 @@ exports.getClearanceRequestData = async (req, res) => {
                     } else if (now < start) {
                         systemActive = false;
                         systemMessage = "Clearance period has not started yet.";
+                        targetDate = start.toISOString();
                         const diffMs = start - now;
                         daysRemaining = Math.floor(diffMs / (1000 * 60 * 60 * 24));
                         hoursRemaining = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        minutesRemaining = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
                     }
                 } else {
                     systemActive = false;
@@ -713,8 +705,8 @@ exports.submitClearanceRequest = async (req, res) => {
         const db = req.db;
         const studentId = req.session.user.student_id;
         const { reason, request_type, submit_all_clearance } = req.body;
-        if (!reason) {
-            return res.status(400).json({ success: false, message: 'Reason is required' });
+        if (!reason || reason.trim().length < 10) {
+            return res.status(400).json({ success: false, message: 'Reason must be at least 10 characters long' });
         }
 
         // VALIDATION: Check if clearance period is still active
@@ -883,27 +875,55 @@ exports.downloadCertificate = async (req, res) => {
         });
 
         const pageWidth = doc.internal.pageSize.getWidth();
-        const startY = 30;
+        const pageHeight = doc.internal.pageSize.getHeight();
+        let startY = 30;
+
+        // --- Formal Borders ---
+        doc.setDrawColor(79, 70, 229); // Indigo
+        doc.setLineWidth(2);
+        doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+        doc.setDrawColor(100, 100, 100);
+        doc.setLineWidth(0.5);
+        doc.rect(12, 12, pageWidth - 24, pageHeight - 24);
+
+        // --- Read Logo ---
+        const path = require('path');
+        const fs = require('fs');
+        try {
+            const logoPath = path.join(__dirname, '..', '..', 'client', 'public', 'logo.png');
+            if (fs.existsSync(logoPath)) {
+                const logoData = fs.readFileSync(logoPath);
+                const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`;
+                doc.addImage(logoBase64, 'PNG', pageWidth / 2 - 15, 18, 30, 30);
+                startY = 55;
+            }
+        } catch (e) {
+            console.error('Could not load logo:', e);
+        }
 
         // --- Header ---
+        doc.setTextColor(10, 10, 50);
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(22);
+        doc.setFontSize(24);
         doc.text("DEBRE BERHAN UNIVERSITY", pageWidth / 2, startY, { align: "center" });
 
         doc.setFontSize(16);
+        doc.setTextColor(100, 100, 100);
         doc.text("OFFICE OF THE REGISTRAR", pageWidth / 2, startY + 10, { align: "center" });
 
-        doc.setDrawColor(0);
+        doc.setDrawColor(200, 200, 200);
         doc.setLineWidth(0.5);
-        doc.line(20, startY + 15, pageWidth - 20, startY + 15);
+        doc.line(30, startY + 18, pageWidth - 30, startY + 18);
 
-        doc.setFontSize(18);
-        doc.text("STUDENT CLEARANCE CERTIFICATE", pageWidth / 2, startY + 28, { align: "center" });
+        doc.setFontSize(22);
+        doc.setTextColor(79, 70, 229);
+        doc.text("STUDENT CLEARANCE CERTIFICATE", pageWidth / 2, startY + 32, { align: "center" });
 
         // --- Student Details ---
+        doc.setTextColor(30, 30, 30);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(12);
-        const detailsY = startY + 45;
+        const detailsY = startY + 50;
 
         doc.text(`This is to certify that:`, 20, detailsY);
         doc.setFont("helvetica", "bold");
@@ -961,13 +981,26 @@ exports.downloadCertificate = async (req, res) => {
         // --- Signature Section ---
         const sigY = approverY + (depts.length * 8) + 30;
 
+        // Official Seal Placeholder
+        doc.setDrawColor(79, 70, 229);
+        doc.setLineWidth(1);
+        doc.circle(60, sigY + 5, 15, 'S');
+        doc.setFontSize(8);
+        doc.setTextColor(79, 70, 229);
+        doc.text("OFFICIAL", 60, sigY + 3, { align: "center" });
+        doc.text("SEAL", 60, sigY + 9, { align: "center" });
+
+        doc.setDrawColor(0);
+        doc.setTextColor(30, 30, 30);
         doc.setLineWidth(0.3);
         doc.line(120, sigY, 190, sigY); // Signature line
         doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
         doc.text("Registrar Officer Signature", 135, sigY + 5);
 
         doc.setFont("helvetica", "italic");
         doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
         doc.text(`(Date: ${new Date().toLocaleDateString()})`, 140, sigY + 10);
 
         // Footer
@@ -975,6 +1008,7 @@ exports.downloadCertificate = async (req, res) => {
         doc.setFontSize(8);
         doc.setFont("helvetica", "normal");
         doc.text("System Generated by DBU Clearance System - Valid without physical stamp if verified online.", pageWidth / 2, footerY, { align: "center" });
+        doc.text(`Doc ID: REF-${studentId}-${Date.now().toString().slice(-6)}`, pageWidth / 2, footerY + 5, { align: "center" });
 
         // Output
         const pdfBuffer = doc.output("arraybuffer");

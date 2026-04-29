@@ -11,6 +11,7 @@ const ClearanceRequest: React.FC = () => {
     const [reason, setReason] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState<any>(null);
+    const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -33,6 +34,34 @@ const ClearanceRequest: React.FC = () => {
 
         fetchData();
     }, [navigate]);
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (data?.targetDate && (data.systemActive || data.systemMessage?.includes('not started'))) {
+            const updateTime = () => {
+                const now = new Date().getTime();
+                const target = new Date(data.targetDate).getTime();
+                const diffTime = target - now;
+                
+                if (diffTime <= 0) {
+                    setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+                    clearInterval(interval);
+                    window.location.reload();
+                } else {
+                    setTimeLeft({
+                        days: Math.floor(diffTime / (1000 * 60 * 60 * 24)),
+                        hours: Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                        minutes: Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60)),
+                        seconds: Math.floor((diffTime % (1000 * 60)) / 1000)
+                    });
+                }
+            };
+            
+            updateTime();
+            interval = setInterval(updateTime, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [data?.targetDate, data?.systemActive]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,9 +114,15 @@ const ClearanceRequest: React.FC = () => {
                     {data?.systemActive && (
                         <div className="text-right hidden sm:block">
                             <p className="text-[10px] uppercase font-black opacity-60">Time Remaining</p>
-                            <p className="text-lg font-black">
-                                {data?.daysRemaining > 0 ? `${data?.daysRemaining}d ` : ''}
-                                {data?.hoursRemaining}h {data?.minutesRemaining}m
+                            <p className="text-lg font-black font-mono tracking-tight">
+                                {timeLeft ? (
+                                    <>
+                                        {timeLeft.days > 0 && `${timeLeft.days}d `}
+                                        {timeLeft.hours}h {timeLeft.minutes}m <span className="opacity-50">{timeLeft.seconds}s</span>
+                                    </>
+                                ) : (
+                                    'Calculating...'
+                                )}
                             </p>
                         </div>
                     )}
@@ -132,13 +167,19 @@ const ClearanceRequest: React.FC = () => {
                         <h3 className="text-2xl font-black text-gray-900 mb-6">Submit Clearance Request</h3>
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
-                                <label className="block text-sm font-black text-gray-700 uppercase tracking-widest mb-2 px-1">Reason for Clearance</label>
+                                <div className="flex justify-between mb-2 px-1">
+                                    <label className="block text-sm font-black text-gray-700 uppercase tracking-widest">Reason for Clearance</label>
+                                    <span className={`text-xs font-bold ${reason.length < 10 ? 'text-red-500' : 'text-emerald-500'}`}>
+                                        {reason.length}/10 min chars
+                                    </span>
+                                </div>
                                 <textarea
                                     value={reason}
                                     onChange={(e) => setReason(e.target.value)}
-                                    placeholder="Explain why you are requesting clearance"
+                                    placeholder="Explain why you are requesting clearance (e.g., Graduation, Transfer, Withdrawal)"
                                     className="request-textarea"
                                     rows={4}
+                                    minLength={10}
                                     required
                                 ></textarea>
                             </div>

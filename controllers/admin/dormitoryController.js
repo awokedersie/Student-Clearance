@@ -167,6 +167,10 @@ exports.handleAction = async (req, res) => {
         const status = isApproving ? 'approved' : 'rejected';
         const reason = bulk_action ? bulk_reject_reason : reject_reason;
 
+        if (!isApproving && (!reason || reason.trim().length < 10)) {
+            return res.status(400).json({ success: false, message: 'Rejection reason must be at least 10 characters long.' });
+        }
+
         let processedCount = 0;
         for (const id of requestIds) {
             // Check if student is locked by subsequent stages or already approved by dormitory

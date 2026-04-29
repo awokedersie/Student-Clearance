@@ -34,6 +34,9 @@ const DepartmentDashboard: React.FC = () => {
     const [selectedItems, setSelectedItems] = useState<{ id: number, studentId: string }[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [bulkDropdownOpen, setBulkDropdownOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
     const [expandedDetails, setExpandedDetails] = useState<string[]>([]);
 
     const toggleDetails = (studentId: string) => {
@@ -48,12 +51,16 @@ const DepartmentDashboard: React.FC = () => {
 
     const apiPath = location.pathname; // e.g. /admin/departments/library
 
-    const fetchData = async () => {
+    const fetchData = async (page = currentPage, currentLimit = limit) => {
         setLoading(true);
         try {
-            const response = await axios.get(`${apiPath}/data?search=${searchTerm}&status=${statusFilter}`);
+            const response = await axios.get(`${apiPath}/data?search=${searchTerm}&status=${statusFilter}&page=${page}&limit=${currentLimit}`);
             if (response.data.success) {
                 setData(response.data);
+                if (response.data.pagination) {
+                    setCurrentPage(response.data.pagination.page);
+                    setTotalPages(response.data.pagination.totalPages);
+                }
                 setSelectedItems([]); // Clear selection on refresh
             } else {
                 navigate('/admin/login');
@@ -69,8 +76,13 @@ const DepartmentDashboard: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchData();
+        setCurrentPage(1);
+        fetchData(1, limit);
     }, [apiPath, statusFilter]);
+
+    useEffect(() => {
+        fetchData(currentPage, limit);
+    }, [currentPage, limit]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -365,7 +377,7 @@ const DepartmentDashboard: React.FC = () => {
                             )}
                         </div>
 
-                        <form onSubmit={(e) => { e.preventDefault(); fetchData(); }} className="flex gap-2 w-full md:w-auto">
+                        <form onSubmit={(e) => { e.preventDefault(); setCurrentPage(1); fetchData(1, limit); }} className="flex gap-2 w-full md:w-auto">
                             <input
                                 type="text"
                                 placeholder="Search by Student ID Or Name..."
@@ -606,6 +618,30 @@ const DepartmentDashboard: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 bg-white border-t border-gray-100 gap-4">
+                            <div className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                Page {currentPage} of {totalPages}
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="px-4 py-2 bg-gray-50 text-gray-700 rounded-xl font-bold text-[10px] uppercase tracking-widest disabled:opacity-50 hover:bg-gray-100 transition-colors"
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="px-4 py-2 bg-gray-50 text-gray-700 rounded-xl font-bold text-[10px] uppercase tracking-widest disabled:opacity-50 hover:bg-gray-100 transition-colors"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </AdminLayout>

@@ -424,6 +424,7 @@ exports.getManageStudentsData = async (req, res) => {
     try {
         const db = req.db;
         const search = req.query.search || '';
+        const department = req.query.department || '';
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 20;
         const offset = (page - 1) * limit;
@@ -435,14 +436,21 @@ exports.getManageStudentsData = async (req, res) => {
                 AND cr.academic_year = (SELECT academic_year FROM clearance_settings ORDER BY id DESC LIMIT 1)
         `;
 
-        let whereClause = "";
+        let whereConditions = [];
         let params = [];
 
         if (search) {
-            whereClause = " WHERE s.name ILIKE ? OR s.last_name ILIKE ? OR s.student_id ILIKE ? OR s.department ILIKE ?";
+            whereConditions.push("(s.name ILIKE ? OR s.last_name ILIKE ? OR s.student_id ILIKE ?)");
             const searchTerm = `%${search}%`;
-            params = [searchTerm, searchTerm, searchTerm, searchTerm];
+            params.push(searchTerm, searchTerm, searchTerm);
         }
+        
+        if (department) {
+            whereConditions.push("s.department = ?");
+            params.push(department);
+        }
+
+        let whereClause = whereConditions.length > 0 ? " WHERE " + whereConditions.join(" AND ") : "";
 
         // Get total count for pagination
         const countQuery = `SELECT COUNT(*) as total ${baseQuery} ${whereClause}`;
@@ -850,13 +858,23 @@ exports.getAuditLogs = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 50;
         const offset = (page - 1) * limit;
+        const search = req.query.search?.trim() || '';
+
+        let baseQuery = `FROM audit_logs`;
+        let params = [];
+
+        if (search) {
+            baseQuery += ` WHERE admin_name ILIKE ? OR action ILIKE ? OR target_student_id ILIKE ?`;
+            const term = `%${search}%`;
+            params.push(term, term, term);
+        }
 
         const [logs] = await db.execute(
-            `SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-            [limit, offset]
+            `SELECT * ${baseQuery} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+            [...params, limit, offset]
         );
 
-        const [count] = await db.execute(`SELECT COUNT(*) as total FROM audit_logs`);
+        const [count] = await db.execute(`SELECT COUNT(*) as total ${baseQuery}`, params);
 
         res.json({
             success: true,
@@ -872,5 +890,62 @@ exports.getAuditLogs = async (req, res) => {
     } catch (error) {
         console.error('💥 Error fetching audit logs:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch audit logs' });
+    }
+};
+
+exports.resetStudentPassword = async (req, res) => {
+    try {
+        const db = req.db;
+        const { student_id } = req.body;
+
+        if (!student_id) {
+            return res.status(400).json({ success: false, message: 'Student ID is required' });
+        }
+
+        const [students] = await db.execute("SELECT email, name FROM student WHERE student_id = ?", [student_id]);
+        const student = students[0];
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+
+        if (!student.email) {
+            return res.status(400).json({ success: false, message: 'Student has no registered email' });
+        }
+
+        const tempPassword = Math.random().toString(36).slice(-8);
+        const bcrypt = require('bcryptjs');
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        await db.execute("UPDATE student SET password = ? WHERE student_id = ?", [hashedPassword, student_id]);
+
+        const transporter = require('../../config/email');
+        const mailOptions = {
+            from: `"DBU Clearance System" <${process.env.EMAIL_USER || 'no-reply@dbu.edu.et'}>`,
+            to: student.email,
+            subject: 'Your DBU Clearance Password Has Been Reset',
+            html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+                <div style="background-color: #4f46e5; color: white; padding: 20px; text-align: center;">
+                    <h2 style="margin: 0;">Password Reset</h2>
+                </div>
+                <div style="padding: 30px; text-align: center;">
+                    <p>Hello ${student.name},</p>
+                    <p>An administrator has reset your password.</p>
+                    <div style="margin: 30px 0; padding: 20px; background-color: #f3f4f6; border-radius: 8px; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
+                        ${tempPassword}
+                    </div>
+                    <p>Please log in using this temporary password and change it immediately from your profile settings.</p>
+                </div>
+            </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.json({ success: true, message: 'Password reset and emailed successfully' });
+    } catch (error) {
+        console.error('💥 Reset password error:', error);
+        res.status(500).json({ success: false, message: 'Failed to reset password: ' + error.message });
     }
 };

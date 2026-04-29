@@ -109,7 +109,7 @@
 }
 
 .admin-topbar-title {
-    @apply text-lg md:text-xl font-bold text-gray-800 truncate max-w-[150px] md:max-w-none;
+    @apply text-lg md:text-xl font-bold text-gray-800 truncate max-w-[200px] md:max-w-none;
 }
 
 .admin-topbar-profile {
@@ -144,7 +144,7 @@
 }
 
 .admin-stat-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6;
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6;
 }
 
 .admin-stat-card {

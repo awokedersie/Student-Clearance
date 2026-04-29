@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const transporter = require('../../config/email');
 const responseHandler = require('../../utils/responseHandler');
+const { validatePassword } = require('../../utils/validators');
 
 // Function to send verification code email
 async function sendVerificationCode(studentEmail, studentName, verificationCode) {
@@ -40,18 +41,6 @@ async function sendVerificationCode(studentEmail, studentName, verificationCode)
     }
 }
 
-// Strong password validation function
-const validatePassword = (password) => {
-    const errors = [];
-    if (password.length < 8) errors.push("• At least 8 characters long");
-    if (password.length > 16) errors.push("• Maximum 16 characters allowed");
-    if (!/[A-Z]/.test(password)) errors.push("• At least one uppercase letter (A-Z)");
-    if (!/[a-z]/.test(password)) errors.push("• At least one lowercase letter (a-z)");
-    if (!/[0-9]/.test(password)) errors.push("• At least one number (0-9)");
-    if (!/[!@#$%^&*()\-_=+{};:,<.>]/.test(password)) errors.push("• At least one special character");
-    if (/\s/.test(password)) errors.push("• No spaces allowed");
-    return errors;
-};
 
 exports.login = async (req, res) => {
     try {
@@ -139,7 +128,9 @@ exports.changePassword = async (req, res) => {
         }
 
         let userRecord;
-        const table = user.role === 'student' ? 'student' : 'admin';
+        const ALLOWED_TABLES = { student: 'student', admin: 'admin' };
+        const table = ALLOWED_TABLES[user.role === 'student' ? 'student' : 'admin'];
+        if (!table) throw new Error('Invalid role');
 
         const [records] = await db.execute(
             `SELECT * FROM ${table} WHERE username = ?`,
@@ -321,10 +312,11 @@ exports.handleResetPassword = async (req, res) => {
         }
 
         // Strong password validation
-        if (new_password.length < 8) {
+        const passwordErrors = validatePassword(new_password);
+        if (passwordErrors.length > 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Password must be at least 8 characters long.'
+                message: "Password requirements not met: " + passwordErrors.join(". ")
             });
         }
 

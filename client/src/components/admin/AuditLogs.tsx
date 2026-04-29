@@ -18,11 +18,12 @@ interface AuditLog {
 const AuditLogs: React.FC = () => {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
 
-    const fetchLogs = async (page = 1) => {
+    const fetchLogs = async (page = 1, searchTerm = search) => {
         setLoading(true);
         try {
-            const response = await axios.get(`/admin/system/audit-logs/data?page=${page}`);
+            const response = await axios.get(`/admin/system/audit-logs/data?page=${page}&search=${searchTerm}`);
             if (response.data.success) {
                 setData(response.data);
             }
@@ -34,6 +35,7 @@ const AuditLogs: React.FC = () => {
     };
 
     useEffect(() => {
+        document.title = 'Audit Logs — DBU Clearance';
         fetchLogs();
     }, []);
 
@@ -58,9 +60,32 @@ const AuditLogs: React.FC = () => {
             'ADD_ADMIN': 'bg-indigo-100 text-indigo-700',
             'UPDATE_ADMIN': 'bg-violet-100 text-violet-700',
             'DELETE_ADMIN': 'bg-red-100 text-red-700',
-            'TOGGLE_STUDENT_STATUS': 'bg-amber-100 text-amber-700'
+            'TOGGLE_STUDENT_STATUS': 'bg-amber-100 text-amber-700',
+            'RESET_STUDENT_PASSWORD': 'bg-orange-100 text-orange-700',
         };
         return colors[action] || 'bg-gray-100 text-gray-700';
+    };
+
+    const handleExportCSV = () => {
+        const { logs = [] } = data || {};
+        if (logs.length === 0) return;
+        const headers = ['Timestamp', 'Admin', 'Role', 'Action', 'Student ID', 'Details', 'IP Address'];
+        const rows = logs.map((l: AuditLog) => [
+            `"${formatDate(l.created_at)}"`,
+            `"${l.admin_name}"`,
+            `"${l.admin_role}"`,
+            `"${l.action}"`,
+            `"${l.target_student_id || ''}"`,
+            `"${(l.details || '').replace(/"/g, "''")}"`,
+            `"${l.ip_address}"`
+        ].join(','));
+        const csv = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `audit_logs_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
     };
 
     if (loading && !data) {
@@ -72,12 +97,33 @@ const AuditLogs: React.FC = () => {
     return (
         <AdminLayout user={user}>
             <div className="p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
+                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em] mb-1">Administrative</p>
                         <h1 className="text-3xl font-black text-gray-900 tracking-tight">System Audit Logs</h1>
-                        <p className="text-gray-500 font-medium">Immutable history of administrative actions for traceability.</p>
+                        <p className="text-gray-500 font-medium text-sm mt-1">Immutable history of all administrative actions for traceability.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <form onSubmit={(e) => { e.preventDefault(); fetchLogs(1, search); }} className="flex gap-2">
+                            <input
+                                type="text"
+                                placeholder="Search by admin or action..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-56 bg-white border border-gray-200 rounded-2xl px-5 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+                            />
+                            <button type="submit" className="bg-gray-900 hover:bg-black text-white p-3 rounded-2xl transition-all shadow-lg text-sm">🔍</button>
+                        </form>
+                        <button
+                            onClick={handleExportCSV}
+                            disabled={logs.length === 0}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-5 py-3 rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-emerald-100 transition-all disabled:opacity-40 flex items-center gap-2"
+                        >
+                            ↓ CSV
+                        </button>
                     </div>
                 </div>
+
 
                 <div className="admin-table-wrapper">
                     <div className="overflow-x-auto">

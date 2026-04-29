@@ -254,6 +254,10 @@ exports.handleAction = async (req, res) => {
         const finalStatus = isApprove ? 'approved' : 'rejected';
         const finalRejectReason = bulk_action ? bulk_reject_reason : reject_reason;
 
+        if (!isApprove && (!finalRejectReason || finalRejectReason.trim().length < 10)) {
+            return res.status(400).json({ success: false, message: 'Rejection reason must be at least 10 characters long.' });
+        }
+
         console.log(`📝 Processing ${studentsToProcess.length} students. Action: ${finalStatus}`);
 
         for (const sid of studentsToProcess) {

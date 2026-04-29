@@ -14,6 +14,9 @@ exports.getDashboardData = async (req, res) => {
         // Get search and filter parameters
         const search = req.query.search || '';
         const status_filter = req.query.status || 'all';
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
 
         console.log('📊 Fetching statistics...');
         const [statsRows] = await db.execute(`
@@ -90,19 +93,52 @@ exports.getDashboardData = async (req, res) => {
             currentAcademicYear, adminDepartment // WHERE clause
         ];
 
+        // WHERE-only params: 3 JOIN params + 2 WHERE params
+        let countParams = [
+            currentAcademicYear, currentAcademicYear, currentAcademicYear, // JOIN subqueries
+            currentAcademicYear, adminDepartment // WHERE clause
+        ];
+
         if (search) {
-            mainQuery += " AND (dc.name ILIKE ? OR dc.student_id ILIKE ? OR dc.last_name ILIKE ?)";
             const searchTerm = `%${search}%`;
+            mainQuery += " AND (dc.name ILIKE ? OR dc.student_id ILIKE ? OR dc.last_name ILIKE ?)";
             queryParams.push(searchTerm, searchTerm, searchTerm);
+            countParams.push(searchTerm, searchTerm, searchTerm);
         }
 
         if (status_filter !== 'all') {
             mainQuery += " AND dc.status = ?";
             queryParams.push(status_filter);
+            countParams.push(status_filter);
         }
 
         // ORDER BY to prioritize pending requests with dormitory approved
         mainQuery += " ORDER BY priority_order DESC, dc.status = 'pending' DESC, dc.requested_at DESC";
+
+        // Dedicated count query using only JOINs + WHERE (no SELECT subqueries)
+        const countQuery = `
+            SELECT COUNT(*) as total FROM clearance_requests dc
+            LEFT JOIN (
+                SELECT student_id FROM clearance_requests WHERE status = 'approved' AND academic_year = ? AND target_department = 'library' GROUP BY student_id
+            ) lc ON dc.student_id = lc.student_id
+            LEFT JOIN (
+                SELECT student_id FROM clearance_requests WHERE status = 'approved' AND academic_year = ? AND target_department = 'cafeteria' GROUP BY student_id
+            ) cc ON dc.student_id = cc.student_id
+            LEFT JOIN (
+                SELECT student_id FROM clearance_requests WHERE status = 'approved' AND academic_year = ? AND target_department = 'dormitory' GROUP BY student_id
+            ) dmc ON dc.student_id = dmc.student_id
+            WHERE dc.academic_year = ? AND dc.target_department = 'department'
+            AND dc.student_department = ?
+            AND (dc.status != 'pending' OR (lc.student_id IS NOT NULL AND cc.student_id IS NOT NULL AND dmc.student_id IS NOT NULL))
+            ${search ? "AND (dc.name ILIKE ? OR dc.student_id ILIKE ? OR dc.last_name ILIKE ?)" : ''}
+            ${status_filter !== 'all' ? 'AND dc.status = ?' : ''}
+        `;
+
+        const [countResult] = await db.execute(countQuery, countParams);
+        const totalRecords = parseInt(countResult[0]?.total || 0);
+
+        mainQuery += " LIMIT ? OFFSET ?";
+        queryParams.push(limit, offset);
 
         const [allRequests] = await db.execute(mainQuery, queryParams);
 
@@ -145,7 +181,13 @@ exports.getDashboardData = async (req, res) => {
             all_requests: processedRequests,
             search: search,
             status: status_filter,
-            adminDepartment: adminDepartment
+            adminDepartment: adminDepartment,
+            pagination: {
+                total: totalRecords,
+                page: page,
+                limit: limit,
+                totalPages: Math.ceil(totalRecords / limit)
+            }
         });
 
     } catch (error) {
@@ -177,6 +219,10 @@ exports.handleAction = async (req, res) => {
         const isApproving = (action_type === 'approve' || bulk_action === 'approve');
         const status = isApproving ? 'approved' : 'rejected';
         const reason = bulk_action ? bulk_reject_reason : reject_reason;
+
+        if (!isApproving && (!reason || reason.trim().length < 10)) {
+            return res.status(400).json({ success: false, message: 'Rejection reason must be at least 10 characters long.' });
+        }
 
         let processedCount = 0;
         for (const id of requestIds) {

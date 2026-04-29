@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Toaster } from 'react-hot-toast';
+
 import '../../styles/admin.css';
 
 interface AdminLayoutProps {
@@ -58,9 +58,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
             {/* Sidebar */}
             <aside className={`admin-sidebar ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
                 <div className="admin-sidebar-header">
-                    <span>
-                        DBU <span className="text-indigo-400 font-light italic">Clearance</span>
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white rounded-xl p-1 shadow-lg shadow-black/30 flex items-center justify-center overflow-hidden border border-white/10 shrink-0">
+                            <img src="/logo.png" className="w-full h-full object-contain" alt="DBU Logo" />
+                        </div>
+                        <div className="flex flex-col leading-tight">
+                            <span className="text-base font-black tracking-tight">DBU <span className="text-indigo-400 font-light italic">Clearance</span></span>
+                            <span className="text-indigo-400 font-light italic text-[10px] tracking-widest uppercase">Admin Panel</span>
+                        </div>
+                    </div>
                     <button
                         className="lg:hidden text-indigo-300 hover:text-white"
                         onClick={() => setIsSidebarOpen(false)}
@@ -116,8 +122,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
 
                     <div className="admin-topbar-profile">
                         <div className="text-right hidden sm:block">
-                            <p className="text-xs md:text-sm font-bold text-gray-900 truncate max-w-[100px]">{user?.full_name || user?.name}</p>
-                            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black opacity-60">{user?.role?.replace('_', ' ')}</p>
+                            <p className="text-xs md:text-sm font-bold text-gray-900 truncate max-w-[140px] md:max-w-none">{user?.full_name || user?.name}</p>
+                            <p className="text-[10px] text-indigo-500 font-black uppercase tracking-widest">{user?.role?.replace(/_/g, ' ')}</p>
                         </div>
                         <div className="admin-avatar-small">
                             {(user?.name?.[0] || 'A').toUpperCase()}
@@ -129,36 +135,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
                     {children}
                 </div>
             </main>
-            <Toaster
-                position="top-right"
-                toastOptions={{
-                    className: 'font-bold text-sm',
-                    style: {
-                        background: '#333',
-                        color: '#fff',
-                        borderRadius: '16px',
-                        padding: '16px',
-                    },
-                    success: {
-                        style: {
-                            background: '#10B981',
-                        },
-                        iconTheme: {
-                            primary: 'white',
-                            secondary: '#10B981',
-                        },
-                    },
-                    error: {
-                        style: {
-                            background: '#EF4444',
-                        },
-                        iconTheme: {
-                            primary: 'white',
-                            secondary: '#EF4444',
-                        },
-                    },
-                }}
-            />
+
         </div>
     );
 };
