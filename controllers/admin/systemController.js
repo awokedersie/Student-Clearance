@@ -941,9 +941,16 @@ exports.resetStudentPassword = async (req, res) => {
             `
         };
 
-        await transporter.sendMail(mailOptions);
-
-        res.json({ success: true, message: 'Password reset and emailed successfully' });
+        try {
+            await transporter.sendMail(mailOptions);
+            res.json({ success: true, message: 'Password reset and emailed successfully' });
+        } catch (emailError) {
+            console.error('💥 Email delivery failed:', emailError);
+            res.json({ 
+                success: true, 
+                message: `Password reset to: ${tempPassword}. (Email delivery failed, please share this password manually)` 
+            });
+        }
     } catch (error) {
         console.error('💥 Reset password error:', error);
         res.status(500).json({ success: false, message: 'Failed to reset password: ' + error.message });
