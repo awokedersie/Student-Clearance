@@ -943,12 +943,12 @@ exports.resetStudentPassword = async (req, res) => {
 
         try {
             await transporter.sendMail(mailOptions);
-            res.json({ success: true, message: 'Password reset and emailed successfully' });
+            res.json({ success: true, message: 'Password reset and emailed successfully.' });
         } catch (emailError) {
-            console.error('💥 Email delivery failed:', emailError);
+            console.error('⚠️ Email failed to send, but password was reset:', emailError.message);
             res.json({ 
                 success: true, 
-                message: `Password reset to: ${tempPassword}. (Email delivery failed, please share this password manually)` 
+                message: `Password reset to: ${tempPassword} (Email failed to send due to server restrictions)` 
             });
         }
     } catch (error) {

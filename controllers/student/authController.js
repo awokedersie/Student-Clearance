@@ -217,9 +217,15 @@ exports.handleForgotPassword = async (req, res) => {
                     message: 'Verification code sent to your email'
                 });
             } else {
+                // Clear the session since we couldn't send the code
+                delete req.session.verification_code;
+                delete req.session.verification_expiry;
+                delete req.session.reset_student_id;
+                delete req.session.reset_email;
+
                 return res.status(500).json({
                     success: false,
-                    message: 'Failed to send verification code. ' + emailResult.error
+                    message: 'Email service is currently unavailable. Please ask your Department Administrator to reset your password.'
                 });
             }
         } else {
