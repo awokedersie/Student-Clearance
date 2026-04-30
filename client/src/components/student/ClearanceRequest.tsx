@@ -36,30 +36,37 @@ const ClearanceRequest: React.FC = () => {
     }, [navigate]);
 
     useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (data?.targetDate && (data.systemActive || data.systemMessage?.includes('not started'))) {
-            const updateTime = () => {
-                const now = new Date().getTime();
-                const target = new Date(data.targetDate).getTime();
-                const diffTime = target - now;
-                
-                if (diffTime <= 0) {
-                    setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-                    clearInterval(interval);
-                    window.location.reload();
-                } else {
-                    setTimeLeft({
-                        days: Math.floor(diffTime / (1000 * 60 * 60 * 24)),
-                        hours: Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-                        minutes: Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60)),
-                        seconds: Math.floor((diffTime % (1000 * 60)) / 1000)
-                    });
-                }
-            };
-            
-            updateTime();
-            interval = setInterval(updateTime, 1000);
+        // If no targetDate, set a sentinel so we never show "Calculating..."
+        if (!data) return;
+        if (!data.targetDate) {
+            setTimeLeft(null); // will be handled in render with proper label
+            return;
         }
+
+        let interval: NodeJS.Timeout;
+
+        const updateTime = () => {
+            const now = new Date().getTime();
+            const target = new Date(data.targetDate).getTime();
+            const diffTime = target - now;
+
+            if (diffTime <= 0) {
+                setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+                clearInterval(interval);
+                window.location.reload();
+            } else {
+                setTimeLeft({
+                    days: Math.floor(diffTime / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                    minutes: Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60)),
+                    seconds: Math.floor((diffTime % (1000 * 60)) / 1000)
+                });
+            }
+        };
+
+        updateTime(); // compute immediately — no first-frame "Calculating..."
+        interval = setInterval(updateTime, 1000);
+
         return () => clearInterval(interval);
     }, [data?.targetDate, data?.systemActive]);
 
@@ -115,13 +122,15 @@ const ClearanceRequest: React.FC = () => {
                         <div className="text-right hidden sm:block">
                             <p className="text-[10px] uppercase font-black opacity-60">Time Remaining</p>
                             <p className="text-lg font-black font-mono tracking-tight">
-                                {timeLeft ? (
+                                {!data?.targetDate ? (
+                                    <span className="text-sm font-bold opacity-60">Open</span>
+                                ) : timeLeft ? (
                                     <>
                                         {timeLeft.days > 0 && `${timeLeft.days}d `}
                                         {timeLeft.hours}h {timeLeft.minutes}m <span className="opacity-50">{timeLeft.seconds}s</span>
                                     </>
                                 ) : (
-                                    'Calculating...'
+                                    <span className="text-sm font-bold opacity-60">—</span>
                                 )}
                             </p>
                         </div>
