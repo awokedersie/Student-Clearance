@@ -1,34 +1,44 @@
 const { Resend } = require('resend');
 
-// Use Resend API (HTTPS-based) which works on Render free tier.
-// Gmail SMTP (port 587/465) is blocked by Render's firewall on free plans.
+console.log('📬 Using Resend HTTP API for Email Delivery');
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-console.log('📬 Email delivery via Resend API (HTTPS)');
-
 /**
- * Drop-in replacement for nodemailer transporter.sendMail()
+ * Drop-in replacement for nodemailer transporter.
  * Accepts the same mailOptions shape: { from, to, subject, html, text }
+ * Returns a result object compatible with nodemailer's sendMail response.
  */
 const transporter = {
     sendMail: async (mailOptions) => {
-        if (!process.env.RESEND_API_KEY) {
-            throw new Error('RESEND_API_KEY environment variable is not set');
+        try {
+            if (!process.env.RESEND_API_KEY) {
+                throw new Error('RESEND_API_KEY environment variable is not set');
+            }
+
+            // Resend requires a verified sender domain.
+            // For development / unverified domains, fall back to the Resend shared sender.
+            const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+            const { data, error } = await resend.emails.send({
+                from:    from,
+                to:      Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to],
+                subject: mailOptions.subject,
+                html:    mailOptions.html  || undefined,
+                text:    mailOptions.text  || undefined,
+            });
+
+            if (error) {
+                throw new Error(error.message || JSON.stringify(error));
+            }
+
+            console.log('✅ Email sent via Resend. ID:', data?.id);
+            return { messageId: data?.id };
+
+        } catch (err) {
+            console.error('❌ Resend error:', err.message);
+            throw err;
         }
-
-        const { data, error } = await resend.emails.send({
-            from: mailOptions.from || `DBU Clearance System <onboarding@resend.dev>`,
-            to: Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to],
-            subject: mailOptions.subject,
-            html: mailOptions.html,
-            text: mailOptions.text,
-        });
-
-        if (error) {
-            throw new Error(error.message || 'Resend API error');
-        }
-
-        return { messageId: data?.id };
     }
 };
 
