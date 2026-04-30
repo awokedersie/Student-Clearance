@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import AdminLayout from './AdminLayout';
-import Loading from '../common/Loading';
+
 import { SkeletonTable } from '../common/Skeleton';
 
 interface AuditLog {

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFeedback } from '../../context/FeedbackContext';
 import AdminLayout from './AdminLayout';
-import Loading from '../common/Loading';
+
 import { SkeletonTable } from '../common/Skeleton';
 import ConfirmModal from '../common/ConfirmModal';
 

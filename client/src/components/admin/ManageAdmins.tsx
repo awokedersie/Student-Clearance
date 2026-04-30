@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
-import Loading from '../common/Loading';
+
 import { SkeletonTable } from '../common/Skeleton';
 import { useFeedback } from '../../context/FeedbackContext';
 

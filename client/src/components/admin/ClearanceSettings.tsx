@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AdminLayout from './AdminLayout';
 import { useFeedback } from '../../context/FeedbackContext';
-import Loading from '../common/Loading';
+
 import { SkeletonSettings } from '../common/Skeleton';
 
 const ClearanceSettings: React.FC = () => {

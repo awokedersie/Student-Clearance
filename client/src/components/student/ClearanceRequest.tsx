@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import StudentLayout from './StudentLayout';
-import Loading from '../common/Loading';
+
 import { SkeletonClearanceRequest } from '../common/Skeleton';
 
 const ClearanceRequest: React.FC = () => {

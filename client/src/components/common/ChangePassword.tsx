@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import StudentLayout from '../student/StudentLayout';
 import AdminLayout from '../admin/AdminLayout';
-import Loading from './Loading';
+
 import { SkeletonChangePassword } from './Skeleton';
 
 const ChangePassword: React.FC = () => {
