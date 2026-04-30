@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import StudentLayout from './StudentLayout';
 import Loading from '../common/Loading';
+import { SkeletonFeed } from '../common/Skeleton';
 
 const Notifications: React.FC = () => {
     const [user, setUser] = useState<any>(null);
@@ -65,9 +66,7 @@ const Notifications: React.FC = () => {
         }
     };
 
-    if (loading) {
-        return <Loading />;
-    }
+    if (loading) return <SkeletonFeed />;
 
     return (
         <StudentLayout user={user}>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import AdminLayout from './AdminLayout';
 import Loading from '../common/Loading';
+import { SkeletonTable } from '../common/Skeleton';
 
 interface AuditLog {
     id: number;
@@ -89,7 +90,7 @@ const AuditLogs: React.FC = () => {
     };
 
     if (loading && !data) {
-        return <Loading />;
+        return <SkeletonTable />;
     }
 
     const { logs = [], user, pagination = { page: 1, limit: 50, total: 0, pages: 1 } } = data || {};

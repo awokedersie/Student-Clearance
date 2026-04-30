@@ -3,6 +3,7 @@ import axios from 'axios';
 import AdminLayout from './AdminLayout';
 import { Link, useNavigate } from 'react-router-dom';
 import Loading from '../common/Loading';
+import { SkeletonAdminDashboard } from '../common/Skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const SystemDashboard: React.FC = () => {
@@ -31,7 +32,7 @@ const SystemDashboard: React.FC = () => {
         fetchStats();
     }, [navigate]);
 
-    if (loading) return <Loading />;
+    if (loading) return <SkeletonAdminDashboard />;
 
     if (!data) return <div className="p-8 text-center text-red-500 font-bold">Failed to load system data</div>;
 

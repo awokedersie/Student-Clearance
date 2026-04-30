@@ -4,6 +4,7 @@ import axios from 'axios';
 import AdminLayout from './AdminLayout';
 import { useFeedback } from '../../context/FeedbackContext';
 import Loading from '../common/Loading';
+import { SkeletonSettings } from '../common/Skeleton';
 
 const ClearanceSettings: React.FC = () => {
     const [data, setData] = useState<any>(null);
@@ -65,7 +66,7 @@ const ClearanceSettings: React.FC = () => {
         }
     };
 
-    if (loading && !data) return <Loading />;
+    if (loading && !data) return <SkeletonSettings />;
     if (!data) return (
         <div className="min-h-[400px] flex items-center justify-center">
             <div className="text-center p-12 bg-red-50 rounded-[40px] border border-red-100 max-w-md">

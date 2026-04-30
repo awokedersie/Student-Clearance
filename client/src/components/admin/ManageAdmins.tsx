@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 import Loading from '../common/Loading';
+import { SkeletonTable } from '../common/Skeleton';
 import { useFeedback } from '../../context/FeedbackContext';
 
 interface Admin {
@@ -104,7 +105,7 @@ const ManageAdmins: React.FC = () => {
         }
     };
 
-    if (loading && !data) return <Loading />;
+    if (loading && !data) return <SkeletonTable />;
 
     const { admins = [], departments = [], user } = data || {};
 

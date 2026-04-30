@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 import Loading from '../common/Loading';
+import { SkeletonTable } from '../common/Skeleton';
 import { useFeedback } from '../../context/FeedbackContext';
 
 interface ClearanceRecord {
@@ -211,7 +212,7 @@ const DepartmentDashboard: React.FC = () => {
         }
     };
 
-    if (loading && !data) return <Loading />;
+    if (loading && !data) return <SkeletonTable />;
 
     const { user, all_requests = [], stats = {} } = data || {};
     const isRegistrar = location.pathname.includes('registrar');

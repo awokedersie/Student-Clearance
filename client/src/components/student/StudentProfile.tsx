@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import StudentLayout from './StudentLayout';
 import Loading from '../common/Loading';
+import { SkeletonProfile } from '../common/Skeleton';
 
 const StudentProfile: React.FC = () => {
     const [user, setUser] = useState<any>(null);
@@ -56,6 +57,7 @@ const StudentProfile: React.FC = () => {
         };
 
         fetchProfile();
+        document.title = 'My Profile — DBU Clearance';
     }, [navigate]);
 
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,9 +141,7 @@ const StudentProfile: React.FC = () => {
         }
     };
 
-    if (loading) {
-        return <Loading />;
-    }
+    if (loading) return <SkeletonProfile />;
 
     return (
         <StudentLayout user={user}>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import StudentLayout from './StudentLayout';
 import Loading from '../common/Loading';
+import { SkeletonStudentDashboard } from '../common/Skeleton';
 
 interface User {
     id: number;
@@ -93,9 +94,7 @@ const StudentDashboard: React.FC = () => {
         return () => clearInterval(interval);
     }, [targetDate, systemStatus]);
 
-    if (loading) {
-        return <Loading />;
-    }
+    if (loading) return <SkeletonStudentDashboard />;
 
     const isAccountActive = user?.status?.toLowerCase() === 'active';
     const isSystemOpen = systemStatus === 'Clearance Open';

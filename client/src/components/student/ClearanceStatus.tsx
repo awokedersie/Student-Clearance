@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import StudentLayout from './StudentLayout';
 import Loading from '../common/Loading';
+import { SkeletonClearanceStatus } from '../common/Skeleton';
 
 const ClearanceStatus: React.FC = () => {
     const [user, setUser] = useState<any>(null);
@@ -31,9 +32,7 @@ const ClearanceStatus: React.FC = () => {
         fetchData();
     }, [navigate]);
 
-    if (loading) {
-        return <Loading />;
-    }
+    if (loading) return <SkeletonClearanceStatus />;
 
     return (
         <StudentLayout user={user}>
