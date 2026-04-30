@@ -329,6 +329,47 @@ export const SkeletonSettings: React.FC = () => (
     </div>
 );
 
+/* ─── Change Password skeleton ──────────────────────────────────── */
+export const SkeletonChangePassword: React.FC = () => (
+    <div className="max-w-xl mx-auto py-10 space-y-8 p-4">
+        <div className="bg-white rounded-3xl p-8 border border-gray-100 space-y-8">
+            <div className="text-center space-y-4">
+                <Pulse className="w-20 h-20 rounded-3xl mx-auto" />
+                <Pulse className="h-8 w-48 mx-auto" />
+                <Pulse className="h-3 w-64 mx-auto" />
+            </div>
+            
+            <div className="space-y-6">
+                <div className="space-y-2">
+                    <Pulse className="h-3 w-32" />
+                    <Pulse className="h-14 w-full rounded-2xl" />
+                </div>
+                
+                <div className="space-y-2">
+                    <Pulse className="h-3 w-28" />
+                    <Pulse className="h-14 w-full rounded-2xl" />
+                </div>
+                
+                <div className="space-y-2">
+                    <Pulse className="h-3 w-40" />
+                    <Pulse className="h-14 w-full rounded-2xl" />
+                </div>
+                
+                <Pulse className="h-16 w-full rounded-[28px] mt-4" />
+            </div>
+        </div>
+        
+        <div className="bg-white/40 rounded-3xl p-8 border border-white/60 flex items-start gap-6">
+            <Pulse className="w-12 h-12 rounded-xl shrink-0" />
+            <div className="flex-1 space-y-2">
+                <Pulse className="h-3 w-24" />
+                <Pulse className="h-3 w-full" />
+                <Pulse className="h-3 w-3/4" />
+            </div>
+        </div>
+    </div>
+);
+
 /* ─── Default full-page spinner (keep for fallback) ─────────────── */
 export const SkeletonSpinner: React.FC = () => (
     <div className="min-h-screen flex items-center justify-center bg-gray-50/50">

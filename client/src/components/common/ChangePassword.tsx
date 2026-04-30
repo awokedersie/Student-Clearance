@@ -4,6 +4,7 @@ import axios from 'axios';
 import StudentLayout from '../student/StudentLayout';
 import AdminLayout from '../admin/AdminLayout';
 import Loading from './Loading';
+import { SkeletonChangePassword } from './Skeleton';
 
 const ChangePassword: React.FC = () => {
     const [user, setUser] = useState<any>(null);
@@ -75,9 +76,7 @@ const ChangePassword: React.FC = () => {
         }
     };
 
-    if (loading) {
-        return <Loading />;
-    }
+    if (loading) return <SkeletonChangePassword />;
 
     const isAdmin = user?.role && user.role !== 'student';
     const Layout = isAdmin ? AdminLayout : StudentLayout;
