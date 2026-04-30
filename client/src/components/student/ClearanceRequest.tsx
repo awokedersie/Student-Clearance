@@ -118,13 +118,11 @@ const ClearanceRequest: React.FC = () => {
                         <p className="font-black text-sm uppercase tracking-widest">{data?.systemActive ? 'System Active' : 'System Closed'}</p>
                         <p className="font-medium mt-0.5">{data?.systemMessage}</p>
                     </div>
-                    {data?.systemActive && (
+                    {data?.systemActive && data?.targetDate && (
                         <div className="text-right hidden sm:block">
-                            <p className="text-[10px] uppercase font-black opacity-60">Time Remaining</p>
+                            <p className="text-[10px] uppercase font-black opacity-60">Closes In</p>
                             <p className="text-lg font-black font-mono tracking-tight">
-                                {!data?.targetDate ? (
-                                    <span className="text-sm font-bold opacity-60">Open</span>
-                                ) : timeLeft ? (
+                                {timeLeft ? (
                                     <>
                                         {timeLeft.days > 0 && `${timeLeft.days}d `}
                                         {timeLeft.hours}h {timeLeft.minutes}m <span className="opacity-50">{timeLeft.seconds}s</span>
