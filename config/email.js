@@ -1,22 +1,35 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-console.log('📬 Configuring SMTP for Email Delivery');
+// Use Resend API (HTTPS-based) which works on Render free tier.
+// Gmail SMTP (port 587/465) is blocked by Render's firewall on free plans.
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Render and other cloud providers sometimes block outbound SMTP ports (465/587)
-// We add strict timeouts so the application doesn't hang indefinitely.
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // true for 465, false for other ports
-    auth: {
-        user: (process.env.EMAIL_USER || '').trim(),
-        pass: (process.env.EMAIL_PASS || '').trim()
-    },
-    // Fail quickly if the network blocks SMTP (e.g., Render free tier)
-    connectionTimeout: 5000, 
-    greetingTimeout: 5000,
-    socketTimeout: 5000
-});
+console.log('📬 Email delivery via Resend API (HTTPS)');
+
+/**
+ * Drop-in replacement for nodemailer transporter.sendMail()
+ * Accepts the same mailOptions shape: { from, to, subject, html, text }
+ */
+const transporter = {
+    sendMail: async (mailOptions) => {
+        if (!process.env.RESEND_API_KEY) {
+            throw new Error('RESEND_API_KEY environment variable is not set');
+        }
+
+        const { data, error } = await resend.emails.send({
+            from: mailOptions.from || `DBU Clearance System <onboarding@resend.dev>`,
+            to: Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to],
+            subject: mailOptions.subject,
+            html: mailOptions.html,
+            text: mailOptions.text,
+        });
+
+        if (error) {
+            throw new Error(error.message || 'Resend API error');
+        }
+
+        return { messageId: data?.id };
+    }
+};
 
 module.exports = transporter;
-

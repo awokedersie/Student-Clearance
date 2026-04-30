@@ -941,16 +941,9 @@ exports.resetStudentPassword = async (req, res) => {
             `
         };
 
-        try {
-            await transporter.sendMail(mailOptions);
-            res.json({ success: true, message: 'Password reset and emailed successfully.' });
-        } catch (emailError) {
-            console.error('⚠️ Email failed to send, but password was reset:', emailError.message);
-            res.json({ 
-                success: true, 
-                message: `Password reset to: ${tempPassword} (Email failed to send due to server restrictions)` 
-            });
-        }
+        await transporter.sendMail(mailOptions);
+
+        res.json({ success: true, message: 'Password reset and emailed successfully' });
     } catch (error) {
         console.error('💥 Reset password error:', error);
         res.status(500).json({ success: false, message: 'Failed to reset password: ' + error.message });
