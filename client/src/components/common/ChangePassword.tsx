@@ -14,6 +14,14 @@ const ChangePassword: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState<any>(null);
+
+    // Auto-dismiss error messages after 5 seconds
+    useEffect(() => {
+        if (!message || message.type !== 'error') return;
+        const timer = setTimeout(() => setMessage(null), 5000);
+        return () => clearTimeout(timer);
+    }, [message]);
+
     const navigate = useNavigate();
     const location = useLocation();
 

@@ -15,6 +15,13 @@ const ClearanceRequest: React.FC = () => {
     const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
     const navigate = useNavigate();
 
+    // Auto-dismiss error messages after 5 seconds
+    useEffect(() => {
+        if (!message || message.type !== 'error') return;
+        const timer = setTimeout(() => setMessage(null), 5000);
+        return () => clearTimeout(timer);
+    }, [message]);
+
     useEffect(() => {
         const fetchData = async () => {
             try {

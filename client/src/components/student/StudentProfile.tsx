@@ -12,6 +12,14 @@ const StudentProfile: React.FC = () => {
     const [message, setMessage] = useState<any>(null);
     const [photo, setPhoto] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
+
+    // Auto-dismiss error messages after 5 seconds
+    useEffect(() => {
+        if (!message || message.type !== 'error') return;
+        const timer = setTimeout(() => setMessage(null), 5000);
+        return () => clearTimeout(timer);
+    }, [message]);
+
     const navigate = useNavigate();
 
     // Form states

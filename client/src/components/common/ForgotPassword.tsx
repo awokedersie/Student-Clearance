@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
@@ -13,6 +13,13 @@ const ForgotPassword: React.FC = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [message, setMessage] = useState<any>(null);
     const [loading, setLoading] = useState(false);
+
+    // Auto-dismiss error messages after 5 seconds
+    useEffect(() => {
+        if (!message || message.type !== 'error') return;
+        const timer = setTimeout(() => setMessage(null), 5000);
+        return () => clearTimeout(timer);
+    }, [message]);
 
     const handleSendOTP = async (e: React.FormEvent) => {
         e.preventDefault();
