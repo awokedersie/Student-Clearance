@@ -1,8 +1,15 @@
 import React from 'react';
 
-/* ─── Base pulse block ──────────────────────────────────────────── */
+/* ─── Base shimmer block with flowing gradient animation ─────────── */
 const Pulse: React.FC<{ className?: string }> = ({ className = '' }) => (
-    <div className={`bg-gray-200 animate-pulse rounded-xl ${className}`} />
+    <div className={`relative overflow-hidden bg-gray-200 rounded-xl ${className}`}>
+        <div
+            className="absolute inset-0 -translate-x-full animate-shimmer"
+            style={{
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+            }}
+        />
+    </div>
 );
 
 /* ─── Student Dashboard skeleton ────────────────────────────────── */
@@ -329,7 +336,7 @@ export const SkeletonSettings: React.FC = () => (
     </div>
 );
 
-/* ─── Change Password skeleton ──────────────────────────────────── */
+/* ─── Change Password skeleton ───────────────��──────────────────── */
 export const SkeletonChangePassword: React.FC = () => (
     <div className="max-w-xl mx-auto py-10 space-y-8 p-4">
         <div className="bg-white rounded-3xl p-8 border border-gray-100 space-y-8">

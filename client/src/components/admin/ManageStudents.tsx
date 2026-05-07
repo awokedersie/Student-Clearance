@@ -6,6 +6,7 @@ import AdminLayout from './AdminLayout';
 
 import { SkeletonTable } from '../common/Skeleton';
 import ConfirmModal from '../common/ConfirmModal';
+import { NoStudentsState, NoResultsState } from '../common/EmptyState';
 
 interface Student {
     student_id: string;
@@ -381,9 +382,22 @@ const ManageStudents: React.FC = () => {
                             <tbody className="divide-y divide-gray-50">
                                 {students.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="p-20 text-center">
-                                            <div className="text-6xl mb-4">📭</div>
-                                            <h3 className="text-xl font-bold text-gray-300">No students found</h3>
+                                        <td colSpan={6} className="p-8">
+                                            {search || departmentFilter ? (
+                                                <NoResultsState searchTerm={search || departmentFilter} />
+                                            ) : (
+                                                <NoStudentsState 
+                                                    onAction={() => {
+                                                        setEditStudent(null);
+                                                        setFormData({
+                                                            student_id: '', name: '', last_name: '', username: '', email: '',
+                                                            department: '', phone: '', year: '', semester: '',
+                                                            password: '', status: 'active'
+                                                        });
+                                                        setShowForm(true);
+                                                    }} 
+                                                />
+                                            )}
                                         </td>
                                     </tr>
                                 ) : (

@@ -4,6 +4,7 @@ import axios from 'axios';
 import StudentLayout from './StudentLayout';
 
 import { SkeletonFeed } from '../common/Skeleton';
+import { NoNotificationsState } from '../common/EmptyState';
 
 const Notifications: React.FC = () => {
     const [user, setUser] = useState<any>(null);
@@ -97,15 +98,8 @@ const Notifications: React.FC = () => {
                 </div>
 
                 {notifications.length === 0 ? (
-                    <div className="empty-feed-card">
-                        <div className="absolute inset-0 bg-gradient-to-b from-indigo-50/50 to-transparent"></div>
-                        <div className="relative z-10 font-sans">
-                            <div className="w-24 h-24 bg-white rounded-3xl shadow-xl flex items-center justify-center text-4xl mx-auto mb-8 border border-gray-50 transform rotate-3 grayscale opacity-30">
-                                📬
-                            </div>
-                            <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">No Notifications</h3>
-                            <p className="text-gray-400 mt-3 font-medium text-sm max-w-xs mx-auto">You don't have any clearance updates at the moment.</p>
-                        </div>
+                    <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden">
+                        <NoNotificationsState />
                     </div>
                 ) : (
                     <div className="grid gap-6">

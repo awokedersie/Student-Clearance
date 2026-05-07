@@ -4,6 +4,7 @@ import axios from 'axios';
 import StudentLayout from './StudentLayout';
 
 import { SkeletonClearanceStatus } from '../common/Skeleton';
+import { NoClearanceState } from '../common/EmptyState';
 
 const ClearanceStatus: React.FC = () => {
     const [user, setUser] = useState<any>(null);
@@ -49,25 +50,32 @@ const ClearanceStatus: React.FC = () => {
                     </div>
 
                     {!data?.hasRequests ? (
-                        <div className="p-20 text-center">
-                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
-                                📜
-                            </div>
-                            <h3 className="text-xl font-black text-gray-900">No requests found</h3>
-                            <p className="text-gray-500 mt-2 max-w-sm mx-auto font-medium leading-relaxed">
-                                You have not submitted a clearance request for this academic year.
-                            </p>
+                        <div className="p-12">
                             {data?.isSystemOpen ? (
-                                <Link
-                                    to="/student/clearance-request"
-                                    className="mt-8 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20"
-                                >
-                                    Submit Request Now
-                                </Link>
+                                <NoClearanceState 
+                                    onAction={() => navigate('/student/clearance-request')} 
+                                />
                             ) : (
-                                <div className="mt-8 inline-flex items-center gap-2 bg-gray-100 text-gray-400 px-8 py-3 rounded-xl font-bold border border-gray-200 cursor-not-allowed">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h120 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                    System Locked
+                                <div className="flex flex-col items-center justify-center text-center py-12">
+                                    <svg className="w-40 h-32 mb-6" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="50" y="30" width="100" height="110" rx="8" fill="#E5E7EB" />
+                                        <rect x="60" y="45" width="80" height="8" rx="4" fill="#D1D5DB" />
+                                        <rect x="60" y="60" width="60" height="6" rx="3" fill="#D1D5DB" />
+                                        <circle cx="100" cy="95" r="25" fill="#F3F4F6" />
+                                        <rect x="90" y="85" width="20" height="25" rx="3" fill="#9CA3AF" />
+                                        <circle cx="100" cy="80" r="8" fill="#9CA3AF" />
+                                        <rect x="75" y="125" width="50" height="8" rx="4" fill="#D1D5DB" />
+                                    </svg>
+                                    <h3 className="text-xl font-semibold text-gray-900 mb-2">System Locked</h3>
+                                    <p className="text-base text-gray-500 max-w-md mb-6">
+                                        The clearance system is currently closed. Please check back later or contact the administration.
+                                    </p>
+                                    <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-400 px-6 py-3 rounded-2xl font-medium border border-gray-200 cursor-not-allowed">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                        System Closed
+                                    </div>
                                 </div>
                             )}
                         </div>

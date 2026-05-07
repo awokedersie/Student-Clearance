@@ -1,11 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../../controllers/student/authController');
+const { validateBody } = require('../../middleware/validateRequest');
+const { 
+    loginSchema, 
+    passwordChangeSchema, 
+    forgotPasswordSchema,
+    resetPasswordSchema 
+} = require('../../utils/validation/schemas');
 
 // Show student login page - Handled by React
 
 // Handle student login
-router.post('/login', authController.login);
+router.post('/login', validateBody(loginSchema), authController.login);
 
 // Show change password page (Data endpoint)
 router.get('/change-password-data', authController.getChangePasswordData);
@@ -19,7 +26,7 @@ router.get('/change-password', (req, res, next) => {
 });
 
 // Handle password change
-router.post('/change-password', authController.changePassword);
+router.post('/change-password', validateBody(passwordChangeSchema), authController.changePassword);
 
 // Forgot Password Page (Data endpoint)
 router.get('/forgot-password-data', authController.getForgotPasswordData);
@@ -33,7 +40,7 @@ router.get('/forgot-password', (req, res, next) => {
 });
 
 // Handle Forgot Password Submission
-router.post('/forgot-password', authController.handleForgotPassword);
+router.post('/forgot-password', validateBody(forgotPasswordSchema), authController.handleForgotPassword);
 
 // Verify Code Page (Data endpoint)
 router.get('/verify-code-data', authController.getVerifyCodeData);
@@ -61,7 +68,7 @@ router.get('/reset-password', (req, res, next) => {
 });
 
 // Handle Reset Password Submission
-router.post('/reset-password', authController.handleResetPassword);
+router.post('/reset-password', validateBody(resetPasswordSchema), authController.handleResetPassword);
 
 // Reset Success Page (Data endpoint)
 router.get('/reset-success-data', authController.getResetSuccessData);
