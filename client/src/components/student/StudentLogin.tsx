@@ -3,12 +3,35 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import '../../styles/student.css';
 
+// Inline validation rules
+const validateUsername = (value: string): string | null => {
+    if (!value.trim()) return 'Username is required';
+    if (value.length < 3) return 'Username must be at least 3 characters';
+    return null;
+};
+
+const validatePassword = (value: string): string | null => {
+    if (!value) return 'Password is required';
+    if (value.length < 6) return 'Password must be at least 6 characters';
+    return null;
+};
+
 const Login: React.FC = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    
+    // Inline validation states
+    const [touched, setTouched] = useState<{ username: boolean; password: boolean }>({
+        username: false,
+        password: false
+    });
+    const [fieldErrors, setFieldErrors] = useState<{ username: string | null; password: string | null }>({
+        username: null,
+        password: null
+    });
 
     // Auto-dismiss error after 5 seconds
     useEffect(() => {
@@ -16,10 +39,40 @@ const Login: React.FC = () => {
         const timer = setTimeout(() => setError(''), 5000);
         return () => clearTimeout(timer);
     }, [error]);
+    
+    // Validate fields on change
+    useEffect(() => {
+        if (touched.username) {
+            setFieldErrors(prev => ({ ...prev, username: validateUsername(username) }));
+        }
+    }, [username, touched.username]);
+
+    useEffect(() => {
+        if (touched.password) {
+            setFieldErrors(prev => ({ ...prev, password: validatePassword(password) }));
+        }
+    }, [password, touched.password]);
+
     const navigate = useNavigate();
+
+    const handleBlur = (field: 'username' | 'password') => {
+        setTouched(prev => ({ ...prev, [field]: true }));
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Validate all fields before submit
+        const usernameError = validateUsername(username);
+        const passwordError = validatePassword(password);
+        
+        setTouched({ username: true, password: true });
+        setFieldErrors({ username: usernameError, password: passwordError });
+        
+        if (usernameError || passwordError) {
+            return;
+        }
+        
         setLoading(true);
         setError('');
 
@@ -35,7 +88,18 @@ const Login: React.FC = () => {
                 setError(response.data.message || 'Login failed');
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+            // Handle structured error responses
+            const errorData = err.response?.data;
+            if (errorData?.code) {
+                // Structured error with code
+                setError(errorData.message || 'Login failed');
+            } else if (errorData?.errors) {
+                // Validation errors
+                const firstError = errorData.errors[0];
+                setError(firstError?.message || 'Validation failed');
+            } else {
+                setError(errorData?.message || 'Something went wrong. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
@@ -60,8 +124,11 @@ const Login: React.FC = () => {
                     </div>
 
                     {error && (
-                        <div className="error-message">
-                            ⚠️ {error}
+                        <div className="error-message animate-shake">
+                            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>{error}</span>
                         </div>
                     )}
 
@@ -69,7 +136,7 @@ const Login: React.FC = () => {
                     <form onSubmit={handleSubmit} className="w-full mt-8">
                         <div className="mb-6 relative">
                             <label className="form-label">STUDENT USERNAME</label>
-                            <div className="input-wrapper group">
+                            <div className={`input-wrapper group ${touched.username && fieldErrors.username ? 'ring-2 ring-red-500/50' : ''}`}>
                                 <span className="input-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 opacity-70">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -79,16 +146,34 @@ const Login: React.FC = () => {
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
+                                    onBlur={() => handleBlur('username')}
                                     placeholder="Enter your username"
                                     className="input-field"
                                     required
+                                    aria-invalid={touched.username && !!fieldErrors.username}
+                                    aria-describedby={fieldErrors.username ? 'username-error' : undefined}
                                 />
+                                {touched.username && !fieldErrors.username && username && (
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-green-400">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </span>
+                                )}
                             </div>
+                            {touched.username && fieldErrors.username && (
+                                <p id="username-error" className="mt-2 text-sm text-red-400 flex items-center gap-1.5 animate-slideDown">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    {fieldErrors.username}
+                                </p>
+                            )}
                         </div>
 
                         <div className="mb-8 relative">
                             <label className="form-label">PASSWORD</label>
-                            <div className="input-wrapper group">
+                            <div className={`input-wrapper group ${touched.password && fieldErrors.password ? 'ring-2 ring-red-500/50' : ''}`}>
                                 <span className="input-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 opacity-70 scale-x-[-1] -rotate-45">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-.1.43-.563A6 6 0 1 1 21.75 8.25Z" />
@@ -98,9 +183,12 @@ const Login: React.FC = () => {
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
+                                    onBlur={() => handleBlur('password')}
+                                    placeholder="Enter your password"
                                     className="input-field pr-12"
                                     required
+                                    aria-invalid={touched.password && !!fieldErrors.password}
+                                    aria-describedby={fieldErrors.password ? 'password-error' : undefined}
                                 />
                                 <button
                                     type="button"
@@ -120,6 +208,14 @@ const Login: React.FC = () => {
                                     )}
                                 </button>
                             </div>
+                            {touched.password && fieldErrors.password && (
+                                <p id="password-error" className="mt-2 text-sm text-red-400 flex items-center gap-1.5 animate-slideDown">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    {fieldErrors.password}
+                                </p>
+                            )}
                         </div>
 
                         <div className="login-actions">
@@ -151,5 +247,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-
-

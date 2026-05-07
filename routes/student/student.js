@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const studentController = require('../../controllers/student/studentController');
 const { requireStudent } = require('../../middleware/authMiddleware');
+const { validateBody } = require('../../middleware/validateRequest');
+const { profileUpdateSchema, passwordChangeSchema } = require('../../utils/validation/schemas');
 
 // Dashboard Routes
 router.get('/dashboard/data', requireStudent, studentController.getDashboardData);
@@ -23,7 +25,7 @@ router.get('/profile', requireStudent, (req, res, next) => {
     next();
 });
 
-router.post('/profile', requireStudent, studentController.upload.single('profile_photo'), studentController.updateProfile);
+router.post('/profile', requireStudent, studentController.upload.single('profile_photo'), validateBody(profileUpdateSchema), studentController.updateProfile);
 
 router.post('/profile/upload-photo', requireStudent, studentController.upload.single('file'), studentController.uploadProfilePicture);
 router.post('/profile/remove-photo', requireStudent, studentController.removeProfilePicture);
@@ -43,7 +45,7 @@ router.get('/my-status', requireStudent, (req, res, next) => {
 // Change Password Routes
 router.get('/change-password/data', requireStudent, studentController.getChangePasswordData);
 
-router.post('/change-password', requireStudent, studentController.changePassword);
+router.post('/change-password', requireStudent, validateBody(passwordChangeSchema), studentController.changePassword);
 
 // Clearance Request Routes
 router.get('/clearance-request/data', requireStudent, studentController.getClearanceRequestData);
