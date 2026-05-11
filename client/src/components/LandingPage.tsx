@@ -79,12 +79,6 @@ const LandingPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-3">
                     <Link
-                        to="/admin/login"
-                        className="hidden sm:block text-white/60 hover:text-white text-sm font-semibold transition-colors px-4 py-2 rounded-xl hover:bg-white/5"
-                    >
-                        Staff Login
-                    </Link>
-                    <Link
                         to="/login"
                         className="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/30 uppercase tracking-widest"
                     >
@@ -123,15 +117,15 @@ const LandingPage: React.FC = () => {
                         </svg>
                         Student Login
                     </Link>
-                    <Link
-                        to="/admin/login"
+                    <a
+                        href="#how-it-works"
                         className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white font-bold px-8 py-4 rounded-2xl transition-all uppercase tracking-widest text-sm"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
                         </svg>
-                        Staff / Admin
-                    </Link>
+                        How It Works
+                    </a>
                 </div>
 
                 {/* Scroll cue */}
@@ -157,7 +151,7 @@ const LandingPage: React.FC = () => {
             </section>
 
             {/* ── How it works ── */}
-            <section className="px-6 md:px-16 py-24">
+            <section id="how-it-works" className="px-6 md:px-16 py-24">
                 <div className="text-center mb-16">
                     <p className="text-indigo-400 font-black text-[11px] uppercase tracking-[0.3em] mb-3">Simple 3-Step Process</p>
                     <h2 className="text-3xl md:text-5xl font-black tracking-tight">How It Works</h2>
@@ -201,20 +195,6 @@ const LandingPage: React.FC = () => {
                 </div>
             </section>
 
-            {/* ── Departments covered ── */}
-            <section className="px-6 md:px-16 py-16 border-t border-white/5">
-                <p className="text-center text-white/30 text-[11px] font-black uppercase tracking-[0.3em] mb-8">Departments Covered</p>
-                <div className="flex flex-wrap justify-center gap-3 max-w-2xl mx-auto">
-                    {['Library', 'Cafeteria', 'Dormitory', 'Department', 'Registrar', 'Protector'].map((dept) => (
-                        <span
-                            key={dept}
-                            className="px-5 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-2xl text-white/60 text-xs font-black uppercase tracking-widest hover:bg-white/[0.08] hover:text-white transition-all"
-                        >
-                            {dept}
-                        </span>
-                    ))}
-                </div>
-            </section>
 
             {/* ── CTA Banner ── */}
             <section className="px-6 md:px-16 py-20">
@@ -237,11 +217,89 @@ const LandingPage: React.FC = () => {
             </section>
 
             {/* ── Footer ── */}
-            <footer className="border-t border-white/5 px-6 md:px-16 py-8 flex flex-col md:flex-row justify-between items-center gap-4 text-white/25 text-xs">
-                <p className="font-bold">© {new Date().getFullYear()} Debre Berhan University — Student Clearance System</p>
-                <div className="flex items-center gap-6">
-                    <Link to="/login" className="hover:text-white/60 transition-colors font-bold uppercase tracking-widest">Student</Link>
-                    <Link to="/admin/login" className="hover:text-white/60 transition-colors font-bold uppercase tracking-widest">Staff</Link>
+            <footer className="border-t border-white/5 mt-8">
+                {/* Main footer grid */}
+                <div className="px-6 md:px-16 py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+
+                    {/* Brand column */}
+                    <div className="lg:col-span-2 space-y-5">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30 border border-indigo-400/30">
+                                <img src="/logo.png" alt="DBU" className="w-full h-full object-contain p-1" />
+                            </div>
+                            <div>
+                                <p className="font-black text-sm tracking-tight leading-none text-white">DBU Clearance</p>
+                                <p className="text-[10px] text-indigo-300/70 font-light tracking-widest uppercase leading-none mt-0.5">Debre Berhan University</p>
+                            </div>
+                        </div>
+                        <p className="text-white/40 text-sm leading-relaxed max-w-sm">
+                            The official digital clearance management system of Debre Berhan University. Streamlining the student clearance process — fast, transparent, and fully paperless.
+                        </p>
+                        <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-2 w-fit">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-emerald-300 text-[11px] font-black uppercase tracking-widest">System Online</span>
+                        </div>
+                    </div>
+
+                    {/* Quick Links */}
+                    <div className="space-y-5">
+                        <p className="text-white font-black text-xs uppercase tracking-[0.2em]">Quick Links</p>
+                        <ul className="space-y-3">
+                            {[
+                                { label: 'Student Login', href: '/login' },
+                                { label: 'How It Works', href: '#how-it-works' },
+                                { label: 'Get Started', href: '/login' },
+                            ].map(link => (
+                                <li key={link.label}>
+                                    <a
+                                        href={link.href}
+                                        className="text-white/40 hover:text-indigo-300 text-sm font-medium transition-colors flex items-center gap-2 group"
+                                    >
+                                        <span className="w-1 h-1 rounded-full bg-indigo-500/50 group-hover:bg-indigo-400 transition-colors" />
+                                        {link.label}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Contact */}
+                    <div className="space-y-5">
+                        <p className="text-white font-black text-xs uppercase tracking-[0.2em]">Contact</p>
+                        <ul className="space-y-4">
+                            <li className="flex items-start gap-3">
+                                <svg className="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                </svg>
+                                <span className="text-white/40 text-sm leading-relaxed">Debre Berhan University,<br />Debre Berhan, Ethiopia</span>
+                            </li>
+                            <li className="flex items-center gap-3">
+                                <svg className="w-4 h-4 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                                </svg>
+                                <span className="text-white/40 text-sm">registrar@dbu.edu.et</span>
+                            </li>
+                            <li className="flex items-center gap-3">
+                                <svg className="w-4 h-4 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 6.75Z" />
+                                </svg>
+                                <span className="text-white/40 text-sm">+251 11 XXX XXXX</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                {/* Bottom bar */}
+                <div className="border-t border-white/5 px-6 md:px-16 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <p className="text-white/20 text-xs font-medium">
+                        © {new Date().getFullYear()} Debre Berhan University. All rights reserved.
+                    </p>
+                    <div className="flex items-center gap-6 text-white/20 text-xs">
+                        <span className="hover:text-white/40 transition-colors cursor-pointer">Privacy Policy</span>
+                        <span className="hover:text-white/40 transition-colors cursor-pointer">Terms of Use</span>
+                        <span className="hover:text-white/40 transition-colors cursor-pointer">Help &amp; Support</span>
+                    </div>
                 </div>
             </footer>
         </div>
