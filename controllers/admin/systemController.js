@@ -893,6 +893,70 @@ exports.getAuditLogs = async (req, res) => {
     }
 };
 
+exports.resetAdminPassword = async (req, res) => {
+    try {
+        const db = req.db;
+        const { admin_id } = req.body;
+
+        if (!admin_id) {
+            return res.status(400).json({ success: false, message: 'Admin ID is required' });
+        }
+
+        // Prevent resetting own password via this route
+        if (parseInt(admin_id) === req.session.user.id) {
+            return res.status(400).json({ success: false, message: 'You cannot reset your own password this way.' });
+        }
+
+        const [admins] = await db.execute("SELECT email, name, last_name, username FROM admin WHERE id = ?", [admin_id]);
+        const admin = admins[0];
+
+        if (!admin) {
+            return res.status(404).json({ success: false, message: 'Admin not found' });
+        }
+
+        if (!admin.email) {
+            return res.status(400).json({ success: false, message: 'Admin has no registered email' });
+        }
+
+        const tempPassword = Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        await db.execute("UPDATE admin SET password = ? WHERE id = ?", [hashedPassword, admin_id]);
+
+        const transporter = require('../../config/email');
+        const mailOptions = {
+            from: `"DBU Clearance System" <${process.env.EMAIL_USER || 'no-reply@dbu.edu.et'}>`,
+            to: admin.email,
+            subject: 'Your DBU Clearance Admin Password Has Been Reset',
+            html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+                <div style="background-color: #7c3aed; color: white; padding: 20px; text-align: center;">
+                    <h2 style="margin: 0;">Admin Password Reset</h2>
+                </div>
+                <div style="padding: 30px; text-align: center;">
+                    <p>Hello ${admin.name} ${admin.last_name},</p>
+                    <p>A system administrator has reset your account password.</p>
+                    <div style="margin: 30px 0; padding: 20px; background-color: #f3f4f6; border-radius: 8px; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
+                        ${tempPassword}
+                    </div>
+                    <p>Please log in using this temporary password and change it immediately from your profile settings.</p>
+                    <p style="color: #6b7280; font-size: 12px;">Username: <strong>${admin.username}</strong></p>
+                </div>
+            </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        await logger.log(req, 'RESET_ADMIN_PASSWORD', admin_id, `Reset password for admin: ${admin.name} ${admin.last_name} (${admin.username})`, `${admin.name} ${admin.last_name}`);
+
+        res.json({ success: true, message: 'Admin password reset and emailed successfully' });
+    } catch (error) {
+        console.error('💥 Reset admin password error:', error);
+        res.status(500).json({ success: false, message: 'Failed to reset admin password: ' + error.message });
+    }
+};
+
 exports.resetStudentPassword = async (req, res) => {
     try {
         const db = req.db;

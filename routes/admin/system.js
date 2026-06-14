@@ -28,6 +28,7 @@ router.get('/system/manage-admins/data', requireSystemAdmin, systemController.ge
 router.post('/system/manage-admins/add', requireSystemAdmin, systemController.addAdmin);
 router.post('/system/manage-admins/update/:id', requireSystemAdmin, systemController.updateAdmin);
 router.get('/system/manage-admins/delete/:id', requireSystemAdmin, systemController.deleteAdmin);
+router.post('/system/manage-admins/reset-password', requireSystemAdmin, systemController.resetAdminPassword);
 
 // Manage Students
 router.get('/system/manage-students/data', requireSystemAdmin, systemController.getManageStudentsData);
