@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api';
 import { useNavigate, Link } from 'react-router-dom';
 import '../../styles/student.css';
 
@@ -24,7 +24,7 @@ const Login: React.FC = () => {
         setError('');
 
         try {
-            const response = await axios.post('/login', { username, password });
+            const response = await api.post('/login', { username, password });
             if (response.data.success) {
                 if (response.data.user.role === 'student') {
                     navigate('/student/dashboard');
@@ -151,5 +151,6 @@ const Login: React.FC = () => {
 };
 
 export default Login;
+
 
 

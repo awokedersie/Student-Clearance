@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 
@@ -55,7 +55,7 @@ const DepartmentDashboard: React.FC = () => {
     const fetchData = async (page = currentPage, currentLimit = limit) => {
         setLoading(true);
         try {
-            const response = await axios.get(`${apiPath}/data?search=${searchTerm}&status=${statusFilter}&page=${page}&limit=${currentLimit}`);
+            const response = await api.get(`${apiPath}/data?search=${searchTerm}&status=${statusFilter}&page=${page}&limit=${currentLimit}`);
             if (response.data.success) {
                 setData(response.data);
                 if (response.data.pagination) {
@@ -100,7 +100,7 @@ const DepartmentDashboard: React.FC = () => {
         setSubmitting(true);
         try {
             // Send both formats to be compatible with different route handlers
-            const response = await axios.post(`${apiPath}`, {
+            const response = await api.post(`${apiPath}`, {
                 request_id: requestId,
                 student_id: studentId,
                 action_type: status === 'approved' ? 'approve' : 'reject',
@@ -143,7 +143,7 @@ const DepartmentDashboard: React.FC = () => {
 
         setSubmitting(true);
         try {
-            const response = await axios.post(`${apiPath}`, {
+            const response = await api.post(`${apiPath}`, {
                 bulk_action: status === 'approved' ? 'approve' : 'reject',
                 selected_requests: selectedItems.map(item => item.id), // For departments
                 selected_students: selectedItems.map(item => item.studentId), // For registrar
@@ -172,7 +172,7 @@ const DepartmentDashboard: React.FC = () => {
         if (!confirmed) return;
         setSubmitting(true);
         try {
-            const response = await axios.post(apiPath, {
+            const response = await api.post(apiPath, {
                 student_id: studentId
             });
 
@@ -650,3 +650,4 @@ const DepartmentDashboard: React.FC = () => {
 };
 
 export default DepartmentDashboard;
+

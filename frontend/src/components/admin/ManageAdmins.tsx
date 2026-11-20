@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 
@@ -40,7 +40,7 @@ const ManageAdmins: React.FC = () => {
     const fetchData = async (searchTerm = '') => {
         setLoading(true);
         try {
-            const response = await axios.get(`/admin/system/manage-admins/data?search=${searchTerm}`);
+            const response = await api.get(`/admin/system/manage-admins/data?search=${searchTerm}`);
             if (response.data.success) {
                 setData(response.data);
                 if (response.data.edit_admin) {
@@ -73,7 +73,7 @@ const ManageAdmins: React.FC = () => {
             : '/admin/system/manage-admins/add';
 
         try {
-            const response = await axios.post(url, formData);
+            const response = await api.post(url, formData);
             if (response.data.success) {
                 showToast(response.data.message || 'Admin saved successfully', 'success');
                 setShowForm(false);
@@ -95,7 +95,7 @@ const ManageAdmins: React.FC = () => {
         const confirmed = await showConfirm('Delete Admin', 'Are you sure you want to DELETE this admin account?');
         if (!confirmed) return;
         try {
-            const response = await axios.get(`/admin/system/manage-admins/delete/${id}`);
+            const response = await api.get(`/admin/system/manage-admins/delete/${id}`);
             if (response.data.success) {
                 showToast('Admin deleted successfully', 'success');
                 fetchData(search);
@@ -112,7 +112,7 @@ const ManageAdmins: React.FC = () => {
         );
         if (!confirmed) return;
         try {
-            const response = await axios.post('/admin/system/manage-admins/reset-password', { admin_id: id });
+            const response = await api.post('/admin/system/manage-admins/reset-password', { admin_id: id });
             if (response.data.success) {
                 showToast(response.data.message || 'Password reset successfully', 'success');
             }
@@ -359,3 +359,4 @@ const ManageAdmins: React.FC = () => {
 };
 
 export default ManageAdmins;
+

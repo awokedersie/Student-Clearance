@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api';
 import AdminLayout from './AdminLayout';
 
 import { SkeletonTable } from '../common/Skeleton';
@@ -24,7 +24,7 @@ const AuditLogs: React.FC = () => {
     const fetchLogs = async (page = 1, searchTerm = search) => {
         setLoading(true);
         try {
-            const response = await axios.get(`/admin/system/audit-logs/data?page=${page}&search=${searchTerm}`);
+            const response = await api.get(`/admin/system/audit-logs/data?page=${page}&search=${searchTerm}`);
             if (response.data.success) {
                 setData(response.data);
             }
@@ -218,3 +218,4 @@ const AuditLogs: React.FC = () => {
 };
 
 export default AuditLogs;
+

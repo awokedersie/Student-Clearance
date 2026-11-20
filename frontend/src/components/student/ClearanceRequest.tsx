@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import StudentLayout from './StudentLayout';
 
 import { SkeletonClearanceRequest } from '../common/Skeleton';
@@ -25,7 +25,7 @@ const ClearanceRequest: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get('/student/clearance-request/data');
+                const response = await api.get('/student/clearance-request/data');
                 if (response.data.success) {
                     setData(response.data);
                     setUser(response.data.user);
@@ -84,7 +84,7 @@ const ClearanceRequest: React.FC = () => {
         setMessage(null);
 
         try {
-            const response = await axios.post('/student/clearance-request', {
+            const response = await api.post('/student/clearance-request', {
                 submit_all_clearance: true,
                 reason: reason
             });
@@ -97,7 +97,7 @@ const ClearanceRequest: React.FC = () => {
             if (response.data.success) {
                 setReason('');
                 // Refresh data
-                const refreshRes = await axios.get('/student/clearance-request/data');
+                const refreshRes = await api.get('/student/clearance-request/data');
                 setData(refreshRes.data);
             }
         } catch (error: any) {
@@ -235,3 +235,4 @@ const ClearanceRequest: React.FC = () => {
 };
 
 export default ClearanceRequest;
+

@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import '../../styles/student.css';
 
 interface StudentLayoutProps {
@@ -17,7 +17,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
     React.useEffect(() => {
         const fetchUnreadCount = async () => {
             try {
-                const response = await axios.get('/student/notifications/unread-count');
+                const response = await api.get('/student/notifications/unread-count');
                 if (response.data.success) {
                     setUnreadNotifications(response.data.count);
                 }
@@ -37,7 +37,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
 
     const handleLogout = async () => {
         try {
-            await axios.get('/logout');
+            await api.get('/logout');
             navigate('/login');
         } catch (error) {
             console.error('Logout error:', error);
@@ -184,3 +184,4 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children, user }) => {
 };
 
 export default StudentLayout;
+

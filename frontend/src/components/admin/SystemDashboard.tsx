@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api';
 import AdminLayout from './AdminLayout';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -14,7 +14,7 @@ const SystemDashboard: React.FC = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const response = await axios.get('/admin/system/dashboard/data');
+                const response = await api.get('/admin/system/dashboard/data');
                 if (response.data.success) {
                     setData(response.data);
                 } else {
@@ -188,3 +188,4 @@ const SystemDashboard: React.FC = () => {
 };
 
 export default SystemDashboard;
+

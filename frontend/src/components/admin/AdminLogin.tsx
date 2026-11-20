@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import '../../styles/admin.css';
 
 const AdminLogin: React.FC = () => {
@@ -24,7 +24,7 @@ const AdminLogin: React.FC = () => {
         setLoading(true);
 
         try {
-            const response = await axios.post('/admin/login', { username, password });
+            const response = await api.post('/admin/login', { username, password });
             if (response.data.success) {
                 // Redirect based on backend response
                 navigate(response.data.redirect);
@@ -132,5 +132,6 @@ const AdminLogin: React.FC = () => {
 };
 
 export default AdminLogin;
+
 
 

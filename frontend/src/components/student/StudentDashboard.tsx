@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import StudentLayout from './StudentLayout';
 
 import { SkeletonStudentDashboard } from '../common/Skeleton';
@@ -32,7 +32,7 @@ const StudentDashboard: React.FC = () => {
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
-                const response = await axios.get('/student/dashboard/data');
+                const response = await api.get('/student/dashboard/data');
                 if (response.data.success) {
                     setUser(response.data.user);
                     setSystemStatus(response.data.systemStatus || 'Inactive');
@@ -45,7 +45,7 @@ const StudentDashboard: React.FC = () => {
 
                     // Fetch real clearance progress for the circle
                     // Assuming existing API might return this, or default to 0 for now
-                    // Ideally: const statusRes = await axios.get('/student/clearance-status/data');
+                    // Ideally: const statusRes = await api.get('/student/clearance-status/data');
                     // setProgress(calculatePercentage(statusRes.data));
                     // For now, let's look for it in dashboard data or default to 0
                     if (response.data.progressPercentage !== undefined) {
@@ -287,3 +287,4 @@ const StudentDashboard: React.FC = () => {
 };
 
 export default StudentDashboard;
+

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import StudentLayout from './StudentLayout';
 
 import { SkeletonClearanceStatus } from '../common/Skeleton';
@@ -14,7 +14,7 @@ const ClearanceStatus: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get('/student/clearance-status/data');
+                const response = await api.get('/student/clearance-status/data');
                 if (response.data.success) {
                     setData(response.data);
                     setUser(response.data.user);
@@ -161,3 +161,4 @@ const ClearanceStatus: React.FC = () => {
 };
 
 export default ClearanceStatus;
+

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import StudentLayout from '../student/StudentLayout';
 import AdminLayout from '../admin/AdminLayout';
 
@@ -30,7 +30,7 @@ const ChangePassword: React.FC = () => {
             const isAdminPath = window.location.pathname.startsWith('/admin');
             try {
                 // Fetch the common user info route
-                const response = await axios.get('/change-password-data');
+                const response = await api.get('/change-password-data');
                 if (response.data.success) {
                     setUser(response.data.user);
                 } else {
@@ -58,7 +58,7 @@ const ChangePassword: React.FC = () => {
         setMessage(null);
 
         try {
-            const response = await axios.post('/change-password', {
+            const response = await api.post('/change-password', {
                 currentPassword: oldPassword,
                 newPassword: newPassword,
                 confirmPassword: confirmPassword
@@ -191,3 +191,4 @@ const ChangePassword: React.FC = () => {
 };
 
 export default ChangePassword;
+

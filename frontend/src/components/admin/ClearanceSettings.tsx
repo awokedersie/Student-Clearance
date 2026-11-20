@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import AdminLayout from './AdminLayout';
 import { useFeedback } from '../../context/FeedbackContext';
 
@@ -17,7 +17,7 @@ const ClearanceSettings: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('/admin/clearance-settings/data');
+            const response = await api.get('/admin/clearance-settings/data');
             if (response.data.success) {
                 setData(response.data);
             } else {
@@ -41,7 +41,7 @@ const ClearanceSettings: React.FC = () => {
         const confirmed = await showConfirm('Clearance Action', `Are you sure you want to ${action.replace('_', ' ')}?`);
         if (!confirmed) return;
         try {
-            const response = await axios.post(`/admin/clearance-settings/action/${action}`);
+            const response = await api.post(`/admin/clearance-settings/action/${action}`);
             showToast(response.data.message || 'Action completed successfully', 'success');
             fetchData();
         } catch (error: any) {
@@ -56,7 +56,7 @@ const ClearanceSettings: React.FC = () => {
         const payload = Object.fromEntries(formData.entries());
 
         try {
-            await axios.post('/admin/clearance-settings', payload);
+            await api.post('/admin/clearance-settings', payload);
             showToast('Settings updated successfully', 'success');
             fetchData();
         } catch (error: any) {
@@ -234,3 +234,4 @@ const ClearanceSettings: React.FC = () => {
 };
 
 export default ClearanceSettings;
+

@@ -17,12 +17,30 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cors = require('cors');
 const responseHandler = require('./utils/responseHandler');
 
 const app = express();
 
 // ==================== SECURITY MIDDLEWARE ====================
-// 1. Helmet for security headers
+// 1. CORS — allow requests from the Vercel frontend
+const allowedOrigins = process.env.FRONTEND_URL
+    ? [process.env.FRONTEND_URL]
+    : ['http://localhost:5173', 'http://localhost:3000'];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
+    credentials: true, // Required for session cookies
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// 2. Helmet for security headers
 app.use(helmet({
     contentSecurityPolicy: false, // Disable CSP for now to ensure React assets load
     crossOriginEmbedderPolicy: false
@@ -66,6 +84,7 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' required for cross-origin cookies
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }));
@@ -109,7 +128,7 @@ app.use('/admin', routes.protector);
 app.use('/admin', routes.library);
 
 // Serve static files
-app.use(express.static(path.join(__dirname, 'client/dist')));
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static('public'));
 
@@ -131,7 +150,7 @@ app.get('*', (req, res, next) => {
         req.path.includes('/download-certificate');
 
     if (!isStaticOrBackend) {
-        return res.sendFile(path.join(__dirname, 'client/dist/index.html'));
+        return res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
     }
 
     // 4. Fallback for actually missing files or backend routes

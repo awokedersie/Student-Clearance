@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import { useFeedback } from '../../context/FeedbackContext';
 
 const WARNING_TIME_MS = 14 * 60 * 1000; // 14 minutes
@@ -23,7 +23,7 @@ const SessionTimeout: React.FC = () => {
         const loginUrl = isAdmin ? '/admin/login' : '/login';
 
         try {
-            await axios.get(logoutUrl);
+            await api.get(logoutUrl);
         } catch (error) {
             console.error('Logout error on session timeout:', error);
         }
@@ -55,7 +55,7 @@ const SessionTimeout: React.FC = () => {
         setShowWarning(false);
         try {
             // Optional: Ping server to extend session backend too
-            await axios.get('/student/ping').catch(() => {});
+            await api.get('/student/ping').catch(() => {});
         } catch(e) {}
         resetTimeout();
     };
@@ -123,3 +123,4 @@ const SessionTimeout: React.FC = () => {
 };
 
 export default SessionTimeout;
+

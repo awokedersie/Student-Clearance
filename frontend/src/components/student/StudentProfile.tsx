@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import StudentLayout from './StudentLayout';
 
 import { SkeletonProfile } from '../common/Skeleton';
@@ -35,7 +35,7 @@ const StudentProfile: React.FC = () => {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const response = await axios.get('/student/profile/data');
+                const response = await api.get('/student/profile/data');
                 if (response.data.success) {
                     const student = response.data.student;
                     setUser(student);
@@ -119,7 +119,7 @@ const StudentProfile: React.FC = () => {
         }
 
         try {
-            const response = await axios.post('/student/profile', data, {
+            const response = await api.post('/student/profile', data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
@@ -268,3 +268,4 @@ const StudentProfile: React.FC = () => {
 };
 
 export default StudentProfile;
+

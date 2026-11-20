@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFeedback } from '../../context/FeedbackContext';
 import AdminLayout from './AdminLayout';
@@ -86,7 +86,7 @@ const ManageStudents: React.FC = () => {
     const fetchData = async (page = 1, searchTerm = search, deptFilter = departmentFilter) => {
         setLoading(true);
         try {
-            const response = await axios.get<ApiResponse>(`/admin/system/manage-students/data`, {
+            const response = await api.get<ApiResponse>(`/admin/system/manage-students/data`, {
                 params: {
                     search: searchTerm,
                     department: deptFilter,
@@ -148,7 +148,7 @@ const ManageStudents: React.FC = () => {
 
     const executeToggleStatus = async (studentId: string) => {
         try {
-            await axios.post(`/admin/system/manage-students/toggle-status`, { studentId });
+            await api.post(`/admin/system/manage-students/toggle-status`, { studentId });
             showToast('Student status updated', 'success');
             fetchData(currentPage, search);
         } catch (error) {
@@ -170,7 +170,7 @@ const ManageStudents: React.FC = () => {
 
     const executeDelete = async (studentId: string) => {
         try {
-            const response = await axios.post(`/admin/system/manage-students/delete`, { studentId });
+            const response = await api.post(`/admin/system/manage-students/delete`, { studentId });
             if (response.data.success) {
                 showToast('Student deleted successfully', 'success');
                 fetchData(currentPage, search);
@@ -194,7 +194,7 @@ const ManageStudents: React.FC = () => {
 
     const executeBulkAction = async (action: string) => {
         try {
-            await axios.post('/admin/system/manage-students/bulk-actions', {
+            await api.post('/admin/system/manage-students/bulk-actions', {
                 bulk_action: action,
                 selected_students: selectedStudents
             });
@@ -217,7 +217,7 @@ const ManageStudents: React.FC = () => {
         if (!confirmed) return;
 
         try {
-            const response = await axios.post('/admin/system/manage-students/reset-password', { student_id: studentId });
+            const response = await api.post('/admin/system/manage-students/reset-password', { student_id: studentId });
             if (response.data.success) {
                 showToast(response.data.message || 'Password reset successfully', 'success');
             }
@@ -253,7 +253,7 @@ const ManageStudents: React.FC = () => {
         if (profilePicture) data.append('profile_picture', profilePicture);
 
         try {
-            const response = await axios.post(url, data);
+            const response = await api.post(url, data);
             if (response.data.success) {
                 showToast(response.data.message || 'Student saved successfully', 'success');
                 setShowForm(false);
@@ -713,3 +713,4 @@ const ManageStudents: React.FC = () => {
 };
 
 export default ManageStudents;
+

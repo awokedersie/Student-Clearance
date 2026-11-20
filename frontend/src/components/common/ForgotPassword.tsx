@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 
 const ForgotPassword: React.FC = () => {
     const [step, setStep] = useState(1);
@@ -26,7 +26,7 @@ const ForgotPassword: React.FC = () => {
         setLoading(true);
         setMessage(null);
         try {
-            const response = await axios.post('/forgot-password', { name, email });
+            const response = await api.post('/forgot-password', { name, email });
             if (response.data.success) {
                 setStep(2);
                 setMessage({ type: 'success', text: 'Verification code sent to your email.' });
@@ -45,7 +45,7 @@ const ForgotPassword: React.FC = () => {
         setLoading(true);
         setMessage(null);
         try {
-            const response = await axios.post('/verify-code', { verification_code: otp });
+            const response = await api.post('/verify-code', { verification_code: otp });
             if (response.data.success) {
                 setStep(3);
                 setMessage({ type: 'success', text: 'Identity verified. You can now set a new password.' });
@@ -68,7 +68,7 @@ const ForgotPassword: React.FC = () => {
         setLoading(true);
         setMessage(null);
         try {
-            const response = await axios.post('/reset-password', {
+            const response = await api.post('/reset-password', {
                 new_password: newPassword,
                 confirm_password: confirmPassword
             });
@@ -272,5 +272,6 @@ const ForgotPassword: React.FC = () => {
 };
 
 export default ForgotPassword;
+
 
 

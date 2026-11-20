@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import StudentLayout from './StudentLayout';
 
 import { SkeletonFeed } from '../common/Skeleton';
@@ -17,7 +17,7 @@ const Notifications: React.FC = () => {
         document.title = 'Notifications — DBU Clearance';
         const fetchNotifications = async () => {
             try {
-                const response = await axios.get('/student/notifications/data');
+                const response = await api.get('/student/notifications/data');
                 if (response.data.success) {
                     setUser(response.data.user);
                     setNotifications(response.data.notifications);
@@ -50,7 +50,7 @@ const Notifications: React.FC = () => {
     const handleDownload = async () => {
         setDownloading(true);
         try {
-            const response = await axios.get('/student/download-certificate', { responseType: 'blob' });
+            const response = await api.get('/student/download-certificate', { responseType: 'blob' });
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
@@ -171,3 +171,4 @@ const Notifications: React.FC = () => {
 };
 
 export default Notifications;
+

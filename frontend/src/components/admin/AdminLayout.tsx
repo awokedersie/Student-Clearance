@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 
 import '../../styles/admin.css';
 
@@ -16,7 +16,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
 
     const handleLogout = async () => {
         try {
-            await axios.get('/admin/logout');
+            await api.get('/admin/logout');
             navigate('/admin/login');
         } catch (error) {
             console.error('Logout error:', error);
@@ -141,3 +141,4 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
 };
 
 export default AdminLayout;
+
