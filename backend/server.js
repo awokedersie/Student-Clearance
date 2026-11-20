@@ -171,21 +171,21 @@ app.use((err, req, res, next) => {
 
 
 // ==================== SERVER INITIALIZATION ====================
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-    console.log('\n' + '='.repeat(50));
-    console.log('🎓 DBU CLEARANCE SYSTEM - SERVER STARTED');
-    console.log('='.repeat(50));
-    console.log(`🚀 Server running on: http://localhost:${PORT}`);
-    console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-    // dbConfig is now encapsulated in config/db.js
-    console.log('='.repeat(50));
-    console.log(`👨‍🎓 Student Login: http://localhost:${PORT}/login`);
-    console.log(`👨‍💼 Admin Login: http://localhost:${PORT}/admin/login`);
-
-    console.log('='.repeat(50) + '\n');
-});
+// Skip app.listen() on Vercel (serverless) — Vercel uses the exported app directly
+if (!process.env.VERCEL) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log('\n' + '='.repeat(50));
+        console.log('🎓 DBU CLEARANCE SYSTEM - SERVER STARTED');
+        console.log('='.repeat(50));
+        console.log(`🚀 Server running on: http://localhost:${PORT}`);
+        console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log('='.repeat(50));
+        console.log(`👨‍🎓 Student Login: http://localhost:${PORT}/login`);
+        console.log(`👨‍💼 Admin Login: http://localhost:${PORT}/admin/login`);
+        console.log('='.repeat(50) + '\n');
+    });
+}
 
 // ==================== GRACEFUL SHUTDOWN HANDLER ====================
 process.on('SIGINT', async () => {
