@@ -4,19 +4,6 @@
   "installCommand": "npm install",
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/:path*",          "destination": "https://student-clearance-backend.vercel.app/:path*" },
-    { "source": "/admin/:path*",        "destination": "https://student-clearance-backend.vercel.app/admin/:path*" },
-    { "source": "/login",               "destination": "https://student-clearance-backend.vercel.app/login" },
-    { "source": "/logout",              "destination": "https://student-clearance-backend.vercel.app/logout" },
-    { "source": "/student/:path*",      "destination": "https://student-clearance-backend.vercel.app/student/:path*" },
-    { "source": "/uploads/:path*",      "destination": "https://student-clearance-backend.vercel.app/uploads/:path*" },
-    { "source": "/forgot-password",     "destination": "https://student-clearance-backend.vercel.app/forgot-password" },
-    { "source": "/change-password",     "destination": "https://student-clearance-backend.vercel.app/change-password" },
-    { "source": "/verify-code",         "destination": "https://student-clearance-backend.vercel.app/verify-code" },
-    { "source": "/reset-password",      "destination": "https://student-clearance-backend.vercel.app/reset-password" },
-    { "source": "/current-user",        "destination": "https://student-clearance-backend.vercel.app/current-user" },
-    { "source": "/check-session",       "destination": "https://student-clearance-backend.vercel.app/check-session" },
-    { "source": "/(.*)",                "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
-
